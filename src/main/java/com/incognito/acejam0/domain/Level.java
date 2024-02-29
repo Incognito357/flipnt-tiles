@@ -57,7 +57,7 @@ public class Level {
                     .mapToObj(i -> Tile.EMPTY)
                     .toList();
         } else if (map.size() < size) {
-            logger.warn("Map data for level {} missing {} tiles (expected {})", title, map.size() - size, size);
+            logger.warn("Map data for level {} missing {} tiles (expected {})", title, size - map.size(), size);
             this.map = new ArrayList<>(map);
             while (this.map.size() < size) {
                 this.map.add(Tile.EMPTY);
@@ -98,6 +98,10 @@ public class Level {
 
     public BitSet getState() {
         return state;
+    }
+
+    public Map<Integer, List<Action>> getActions() {
+        return actions;
     }
 
     @Override

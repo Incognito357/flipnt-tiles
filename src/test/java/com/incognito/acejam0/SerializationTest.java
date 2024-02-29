@@ -10,10 +10,10 @@ import com.incognito.acejam0.utils.Mapper;
 import org.junit.jupiter.api.Test;
 
 import java.util.BitSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.incognito.acejam0.domain.Tile.EMPTY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -41,32 +41,32 @@ class SerializationTest {
     @Test
     void testLevelSerialization() throws JsonProcessingException {
         Level level = new Level("TITLE", 2, 3,
-                List.of(Tile.START, Tile.FLOOR, Tile.WALL, Tile.EXIT, Tile.EMPTY),
+                List.of(Tile.START, Tile.FLOOR, Tile.WALL, Tile.EXIT, Tile.EMPTY, Tile.WALL),
                 new Builder<>(new BitSet(6)).with(BitSet::set, 3).with(BitSet::set, 12).build(),
-                Map.of(
+                new LinkedHashMap<>(Map.of(
                         0, List.of(new Action(List.of(new ActionInfo(0, 1, -1, null)))),
                         1, List.of(new Action(List.of(new ActionInfo(0, 1, 0, Tile.WALL), new ActionInfo(1, 0, 1, Tile.START))))
-                ));
+                )));
         String s = Mapper.getMapper().writeValueAsString(level);
-        assertEquals("\"{" +
+        assertEquals("{" +
                 "\"title\":\"TITLE\"," +
                 "\"width\":2," +
                 "\"height\":3," +
-                "\"map\":[3,2,1,4,0]," +
+                "\"map\":[3,2,1,4,0,1]," +
                 "\"state\":\"CBA=\"," +
                 "\"actions\":{" +
-                    "\"0\":{" +
+                    "\"0\":[{" +
                         "\"actions\":[{" +
                             "\"x\":0," +
                             "\"y\":1," +
                             "\"stateChange\":-1," +
                             "\"tileChange\":null" +
                         "}]" +
-                    "}," +
-                    "\"1\":{" +
+                    "}]," +
+                    "\"1\":[{" +
                         "\"actions\":[{" +
-                            "\"x\":1," +
-                            "\"y\":0," +
+                            "\"x\":0," +
+                            "\"y\":1," +
                             "\"stateChange\":0," +
                             "\"tileChange\":1" +
                         "},{" +
@@ -75,7 +75,7 @@ class SerializationTest {
                             "\"stateChange\":1," +
                             "\"tileChange\":3" +
                         "}]" +
-                    "}" +
+                    "}]" +
                 "}" +
             "}", s);
 
