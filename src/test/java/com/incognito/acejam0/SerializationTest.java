@@ -82,4 +82,18 @@ class SerializationTest {
         Level deserialized = Mapper.getMapper().readValue(s, Level.class);
         assertEquals(level, deserialized);
     }
+
+    @Test
+    void testBitSetBase64() throws JsonProcessingException {
+        BitSet set = new BitSet(9);
+        set.set(0, 9, true);
+        for (int i = 0; i < 9; i++) {
+            set.clear(i);
+            if (i > 0) {
+                set.set(i - 1);
+            }
+            System.out.println((i + 1) + ": " + Mapper.getMapper().writeValueAsString(set));
+        }
+        System.out.println("All: " + Mapper.getMapper().writeValueAsString(set));
+    }
 }

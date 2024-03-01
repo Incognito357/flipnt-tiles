@@ -1,6 +1,7 @@
 package com.incognito.acejam0.domain;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -69,6 +70,7 @@ public class Level {
         this.state = Objects.requireNonNullElseGet(state, () -> new BitSet(size));
     }
 
+    @JsonIgnore
     public Tile getTile(int x, int y) {
         if (x < 0 || x >= width || y < 0 || y >= height) {
             return null;
@@ -78,6 +80,11 @@ public class Level {
             return null;
         }
         return map.get(i);
+    }
+
+    @JsonIgnore
+    public boolean isTileEnabled(int x, int y) {
+        return state.get(y * width + x);
     }
 
     public String getTitle() {

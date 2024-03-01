@@ -7,6 +7,7 @@ import com.incognito.acejam0.utils.Mapper;
 import com.jme3.app.SimpleApplication;
 import com.jme3.system.AppSettings;
 import com.simsilica.lemur.GuiGlobals;
+import com.simsilica.lemur.anim.AnimationState;
 import com.simsilica.lemur.style.BaseStyles;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
@@ -26,6 +27,7 @@ public class Application extends SimpleApplication {
                 .with(AppSettings::setTitle, "Acerola Jam 0 - Aberration")
                 .with(AppSettings::setResolution, 1440, 810)    // TODO: get from args or config file
                 .build());
+        app.getStateManager().attach(new AnimationState());
         app.setDisplayFps(false);
         app.setDisplayStatView(false);
 

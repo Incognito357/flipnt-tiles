@@ -1,16 +1,13 @@
 {
   "title": "TITLE",
-  "width": 2,
+  "width": 3,
   "height": 3,
   "map": [
-    3,
-    2,
-    1,
-    4,
-    0,
-    1
+    1, 3, 1,
+    1, 2, 1,
+    1, 4, 1
   ],
-  "state": "CBA=",
+  "state": "/wE=",
   "actions": {
     "0": [
       {

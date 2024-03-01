@@ -31,10 +31,17 @@ public class ActionInfo {
         return y;
     }
 
-    public Integer getStateChange() {
+    /**
+     * -1 to disable, 1 to enable, 2 to flip state, 0 to keep original state
+     */
+    public int getStateChange() {
         return stateChange;
     }
 
+    /**
+     * null to keep original tile
+     * @return
+     */
     public Tile getTileChange() {
         return tileChange;
     }

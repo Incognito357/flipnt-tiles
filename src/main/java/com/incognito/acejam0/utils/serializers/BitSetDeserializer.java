@@ -15,6 +15,10 @@ public class BitSetDeserializer extends StdDeserializer<BitSet> {
 
     @Override
     public BitSet deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
-        return BitSet.valueOf(jsonParser.getBinaryValue());
+        byte[] bytes = jsonParser.getBinaryValue();
+        if (bytes == null) {
+            return new BitSet();
+        }
+        return BitSet.valueOf(bytes);
     }
 }
