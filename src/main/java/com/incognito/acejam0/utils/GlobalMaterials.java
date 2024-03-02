@@ -36,4 +36,13 @@ public class GlobalMaterials {
         mat.setColor("Color", colors.get(name));
         return mat;
     }
+
+    public static Material getDebugMaterial(ColorRGBA color) {
+        return mats.computeIfAbsent(color.toString(), c -> {
+            Material mat = new Material(Application.APP.getAssetManager(), Materials.UNSHADED);
+            mat.getAdditionalRenderState().setBlendMode(RenderState.BlendMode.Alpha);
+            mat.setColor("Color", color);
+            return mat;
+        });
+    }
 }

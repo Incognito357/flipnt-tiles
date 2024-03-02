@@ -69,7 +69,7 @@ public class PlayerState extends TypedBaseAppState<Application> {
                 return;
             }
 
-            if (!level.isTileEnabled(nx, ny)) {
+            if (!level.isTileFlipped(nx, ny)) {
                 return;
             }
 

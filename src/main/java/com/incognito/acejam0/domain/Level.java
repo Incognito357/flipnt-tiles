@@ -100,19 +100,28 @@ public class Level {
 
     @JsonIgnore
     public Tile getTile(int x, int y) {
+        return getTile(x, y, map);
+    }
+
+    @JsonIgnore
+    public Tile getTile2(int x, int y) {
+        return getTile(x, y, map2);
+    }
+
+    private Tile getTile(int x, int y, List<Tile> data) {
         if (x < 0 || x >= width || y < 0 || y >= height) {
             return null;
         }
         int i = y * width + x;
-        if (i >= map.size()) {
+        if (i >= data.size()) {
             return null;
         }
-        return map.get(i);
+        return data.get(i);
     }
 
     @JsonIgnore
-    public boolean isTileEnabled(int x, int y) {
-        return !state.get(y * width + x);
+    public boolean isTileFlipped(int x, int y) {
+        return state.get(y * width + x);
     }
 
     public String getTitle() {

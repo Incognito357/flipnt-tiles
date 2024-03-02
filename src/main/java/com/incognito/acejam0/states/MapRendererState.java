@@ -64,7 +64,7 @@ public class MapRendererState extends TypedBaseAppState<Application> {
             Geometry g = new Geometry(String.format("x:%d,y:%d", x, y), new Quad(1, 1));
             g.setMaterial(GlobalMaterials.getTileMaterial(tile));
             g.setLocalTranslation(x, -y - 1f, 0);
-            if (!level.isTileEnabled(x, y)) {
+            if (level.isTileFlipped(x, y)) {
                 g.rotate(0, FastMath.PI, 0);
             }
 
@@ -85,7 +85,7 @@ public class MapRendererState extends TypedBaseAppState<Application> {
             Tile tile = change.getTileChange();
             Spatial node = rootNode.getChild(i);
 
-            boolean oldState = level.isTileEnabled(x, y);
+            boolean oldState = level.isTileFlipped(x, y);
             Tile oldTile = level.getTile(x, y);
             if (state == 2 || (state == -1 && oldState) || state == 1 && !oldState) {
                 tweens.add(SpatialTweens.rotate(
