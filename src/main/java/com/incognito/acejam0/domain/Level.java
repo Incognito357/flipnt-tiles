@@ -3,9 +3,12 @@ package com.incognito.acejam0.domain;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.incognito.acejam0.utils.Mapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
@@ -22,6 +25,7 @@ public class Level {
     private final int width;
     private final int height;
     private final List<Tile> map;
+    private final List<Tile> map2;
     private final BitSet state;
     private final Map<Integer, List<Action>> actions;
 
@@ -31,6 +35,7 @@ public class Level {
             @JsonProperty("width") int width,
             @JsonProperty("height") int height,
             @JsonProperty("map") List<Tile> map,
+            @JsonProperty("map2") List<Tile> map2,
             @JsonProperty("state") BitSet state,
             @JsonProperty("actions") Map<Integer, List<Action>> actions) {
         this.actions = actions;
@@ -67,6 +72,29 @@ public class Level {
             this.map = map;
         }
 
+        if (map2 == null) {
+            this.map2 = IntStream.range(0, size)
+                    .mapToObj(i -> Tile.EMPTY)
+                    .toList();
+        } else if (map2.size() < size) {
+            this.map2 = new ArrayList<>(map2);
+            logger.warn("Map2 data for level {} missing {} tiles (expected {})", title, size - map2.size(), size);
+            while (this.map2.size() < size) {
+                this.map2.add(Tile.EMPTY);
+            }
+        } else {
+            this.map2 = map2;
+        }
+
+        if (this.map.size() > size) {
+            logger.warn("Map data for level {} is {} tiles larger than expected size {} (extra data is ignored)",
+                    title, this.map.size() - size, size);
+        }
+        if (this.map2.size() > size) {
+            logger.warn("Map2 data for level {} is {} tiles larger than expected size {} (extra data is ignored)",
+                    title, this.map2.size() - size, size);
+        }
+
         this.state = Objects.requireNonNullElseGet(state, () -> new BitSet(size));
     }
 
@@ -84,7 +112,7 @@ public class Level {
 
     @JsonIgnore
     public boolean isTileEnabled(int x, int y) {
-        return state.get(y * width + x);
+        return !state.get(y * width + x);
     }
 
     public String getTitle() {
@@ -101,6 +129,10 @@ public class Level {
 
     public List<Tile> getMap() {
         return map;
+    }
+
+    public List<Tile> getMap2() {
+        return map2;
     }
 
     public BitSet getState() {
@@ -120,12 +152,26 @@ public class Level {
                 height == level.height &&
                 Objects.equals(title, level.title) &&
                 Objects.equals(map, level.map) &&
+                Objects.equals(map2, level.map2) &&
                 Objects.equals(state, level.state) &&
                 Objects.equals(actions, level.actions);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(title, width, height, map, state, actions);
+        return Objects.hash(title, width, height, map, map2, state, actions);
+    }
+
+    public static Level loadLevel(String name) {
+        try (InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream("levels/" + name + ".json")) {
+            if (in == null) {
+                logger.error("Could not load level {}", name);
+                return null;
+            }
+            return Mapper.getMapper().readValue(in, Level.class);
+        } catch (IOException e) {
+            logger.error("Could not load level {}", name, e);
+            return null;
+        }
     }
 }

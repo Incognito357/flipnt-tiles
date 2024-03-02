@@ -4,6 +4,7 @@ import com.jme3.app.Application;
 import com.jme3.app.state.BaseAppState;
 
 public abstract class TypedBaseAppState<T extends Application> extends BaseAppState {
+
     @Override
     protected final void initialize(Application app) {
         onInitialize((T) app);

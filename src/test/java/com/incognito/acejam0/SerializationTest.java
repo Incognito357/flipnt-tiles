@@ -42,6 +42,7 @@ class SerializationTest {
     void testLevelSerialization() throws JsonProcessingException {
         Level level = new Level("TITLE", 2, 3,
                 List.of(Tile.START, Tile.FLOOR, Tile.WALL, Tile.EXIT, Tile.EMPTY, Tile.WALL),
+                null,
                 new Builder<>(new BitSet(6)).with(BitSet::set, 3).with(BitSet::set, 12).build(),
                 new LinkedHashMap<>(Map.of(
                         0, List.of(new Action(List.of(new ActionInfo(0, 1, -1, null)))),
@@ -53,6 +54,7 @@ class SerializationTest {
                 "\"width\":2," +
                 "\"height\":3," +
                 "\"map\":[3,2,1,4,0,1]," +
+                "\"map2\":[0,0,0,0,0,0]," +
                 "\"state\":\"CBA=\"," +
                 "\"actions\":{" +
                     "\"0\":[{" +

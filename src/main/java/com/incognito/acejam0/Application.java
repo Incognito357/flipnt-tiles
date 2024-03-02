@@ -1,6 +1,7 @@
 package com.incognito.acejam0;
 
 import com.incognito.acejam0.domain.Level;
+import com.incognito.acejam0.states.MapEditorState;
 import com.incognito.acejam0.states.MapRendererState;
 import com.incognito.acejam0.utils.Builder;
 import com.incognito.acejam0.utils.Mapper;
@@ -16,26 +17,28 @@ import java.io.InputStream;
 import java.util.logging.Logger;
 
 public class Application extends SimpleApplication {
+    public static Application APP;
 
     public static void main(String[] args) {
         SLF4JBridgeHandler.removeHandlersForRootLogger();
         SLF4JBridgeHandler.install();
         Logger.getGlobal().setLevel(java.util.logging.Level.FINEST);
 
-        SimpleApplication app = new Application();
+        Application app = new Application();
         app.setSettings(new Builder<>(new AppSettings(true))
                 .with(AppSettings::setTitle, "Acerola Jam 0 - Aberration")
                 .with(AppSettings::setResolution, 1440, 810)    // TODO: get from args or config file
                 .build());
-        app.getStateManager().attach(new AnimationState());
+        app.getStateManager().attachAll(new AnimationState(), new MapEditorState());
         app.setDisplayFps(false);
         app.setDisplayStatView(false);
 
-        try (InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream("levels/test.json")) {
-            app.getStateManager().attach(new MapRendererState(Mapper.getMapper().readValue(in, Level.class)));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        Level test = Level.loadLevel("test");
+        if (test != null) {
+            app.getStateManager().attach(new MapRendererState(test));
         }
+
+        APP = app;
 
         app.start();
     }

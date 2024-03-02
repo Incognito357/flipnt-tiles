@@ -4,16 +4,13 @@ import com.incognito.acejam0.Application;
 import com.incognito.acejam0.domain.InputBinding;
 import com.incognito.acejam0.domain.Level;
 import com.incognito.acejam0.domain.Tile;
+import com.incognito.acejam0.utils.GlobalMaterials;
 import com.jme3.input.InputManager;
 import com.jme3.input.JoyInput;
 import com.jme3.input.KeyInput;
 import com.jme3.input.controls.ActionListener;
 import com.jme3.input.controls.JoyAxisTrigger;
 import com.jme3.input.controls.KeyTrigger;
-import com.jme3.material.Material;
-import com.jme3.material.Materials;
-import com.jme3.material.RenderState;
-import com.jme3.math.ColorRGBA;
 import com.jme3.math.FastMath;
 import com.jme3.math.Vector2f;
 import com.jme3.scene.Geometry;
@@ -35,7 +32,6 @@ public class PlayerState extends TypedBaseAppState<Application> {
     private Node rootNode;
     private final Node playersNode = new Node();
     private final List<Map.Entry<Spatial, Vector2f>> players = new ArrayList<>();
-    private Material mat;
 
     private InputManager inputManager;
     private final Map<InputBinding, ActionListener> listeners = Map.of(
@@ -97,10 +93,6 @@ public class PlayerState extends TypedBaseAppState<Application> {
         rootNode = app.getRootNode();
         inputManager = app.getInputManager();
 
-        mat = new Material(app.getAssetManager(), Materials.UNSHADED);
-        mat.getAdditionalRenderState().setBlendMode(RenderState.BlendMode.Alpha);
-        mat.setColor("Color", ColorRGBA.Blue);
-
         List<Tile> map = level.getMap();
         for (int i = 0; i < map.size(); i++) {
             if (map.get(i) == Tile.START) {
@@ -108,7 +100,7 @@ public class PlayerState extends TypedBaseAppState<Application> {
                 int y = i / level.getWidth();
                 logger.info("Creating player at {}, {}", x, y);
                 Geometry g = new Geometry(String.format("player-x:%d,y:%d", x, y), new Sphere(16, 2, 0.4f));
-                g.setMaterial(mat);
+                g.setMaterial(GlobalMaterials.getPlayerMaterial());
                 g.rotate(FastMath.HALF_PI, 0, 0);
                 g.setLocalTranslation(x + 0.5f, -y - 0.5f, 0);
                 players.add(Map.entry(g, new Vector2f(x, y)));
