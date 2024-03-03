@@ -117,6 +117,9 @@ public class MapEditorState extends TypedBaseAppState<Application> {
         lblHeight = new Label("");
         gui.addChild(lblHeight, 1);
 
+        lblMouse = new Label("");
+        gui.addChild(lblMouse);
+
         cursor.setMaterial(GlobalMaterials.getDebugMaterial(ColorRGBA.Yellow));
 
         rootNode.attachChild(cursor);
@@ -173,7 +176,6 @@ public class MapEditorState extends TypedBaseAppState<Application> {
             for (int editX = (int)boundsMin.x; editX <= boundsMax.x; editX++) {
                 Vector2f editCell = new Vector2f(editX, editY);
                 TileInfo tileInfo = tiles.get(editCell);
-                logger.info("Adding editor {} to map ({}, {})", editCell, x, y);
                 if (tileInfo == null) {
                     logger.info("No tile data at {} in editor", editCell);
                     map1.add(Tile.EMPTY);
@@ -213,12 +215,15 @@ public class MapEditorState extends TypedBaseAppState<Application> {
         Vector2f click2d = inputManager.getCursorPosition();
         Vector3f click3d = cam.getWorldCoordinates(new Vector2f(click2d.x, click2d.y), depth);
         Vector2f size = boundsMax.subtract(boundsMin);
+
         int x = (int)FastMath.floor(click3d.x + 0.5f);
         int y = (int)FastMath.floor(click3d.y + 0.5f);
-        cursor.setLocalTranslation(x, y, 0.01f);
+        cursor.setLocalTranslation(x, y, 0.1f);
 
-        mouseCell = new Vector2f(x, -y).addLocal(size.divide(2));
+        mouseCell = new Vector2f(x, -y);
         mouseCell.x = FastMath.floor(mouseCell.x);
         mouseCell.y = FastMath.floor(mouseCell.y);
+
+        lblMouse.setText(String.format("cell: (%d, %d)", (int)mouseCell.x, (int)mouseCell.y));
     }
 }

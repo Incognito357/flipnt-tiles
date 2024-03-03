@@ -11,9 +11,11 @@ import com.jme3.math.ColorRGBA;
 import com.jme3.math.FastMath;
 import com.jme3.math.Quaternion;
 import com.jme3.math.Vector3f;
+import com.jme3.renderer.Camera;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
+import com.jme3.scene.shape.CenterQuad;
 import com.jme3.scene.shape.Quad;
 import com.simsilica.lemur.anim.AbstractTween;
 import com.simsilica.lemur.anim.AnimationState;
@@ -61,16 +63,17 @@ public class MapRendererState extends TypedBaseAppState<Application> {
             Tile tile = map.get(i);
             int x = i % level.getWidth();
             int y = i / level.getWidth();
-            Geometry g = new Geometry(String.format("x:%d,y:%d", x, y), new Quad(1, 1));
+            Geometry g = new Geometry(String.format("x:%d,y:%d", x, y), new CenterQuad(1, 1));
             g.setMaterial(GlobalMaterials.getTileMaterial(tile));
-            g.setLocalTranslation(x, -y - 1f, 0);
+            g.setLocalTranslation(x, -y, 0);
             if (level.isTileFlipped(x, y)) {
                 g.rotate(0, FastMath.PI, 0);
             }
 
             tiles.attachChild(g);
         }
-        tiles.setLocalTranslation(-level.getWidth() / 2.0f, level.getHeight() / 2.0f, 0);
+        Camera camera = getApplication().getCamera();
+        camera.setLocation(new Vector3f(level.getWidth() / 2.0f - 0.5f, -level.getHeight() / 2.0f + 0.5f, camera.getLocation().z));
 
         rootNode.attachChild(tiles);
     }

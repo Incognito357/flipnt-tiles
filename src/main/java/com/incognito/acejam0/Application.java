@@ -1,6 +1,7 @@
 package com.incognito.acejam0;
 
 import com.incognito.acejam0.domain.Level;
+import com.incognito.acejam0.states.CameraControlsState;
 import com.incognito.acejam0.states.MapEditorState;
 import com.incognito.acejam0.states.MapRendererState;
 import com.incognito.acejam0.utils.Builder;
@@ -29,7 +30,7 @@ public class Application extends SimpleApplication {
                 .with(AppSettings::setTitle, "Acerola Jam 0 - Aberration")
                 .with(AppSettings::setResolution, 1440, 810)    // TODO: get from args or config file
                 .build());
-        app.getStateManager().attachAll(new AnimationState(), new MapEditorState());
+        app.getStateManager().attachAll(new AnimationState(), new CameraControlsState(), new MapEditorState());
         app.setDisplayFps(false);
         app.setDisplayStatView(false);
 
@@ -51,5 +52,6 @@ public class Application extends SimpleApplication {
         GuiGlobals.getInstance().getStyles().setDefaultStyle("glass");
 
         flyCam.setEnabled(false);
+        cam.setParallelProjection(true);
     }
 }
