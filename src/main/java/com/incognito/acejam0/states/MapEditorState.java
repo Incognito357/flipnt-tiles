@@ -45,6 +45,7 @@ public class MapEditorState extends TypedBaseAppState<Application> {
 
     private AppStateManager appStateManager;
     private InputManager inputManager;
+    private Camera camera;
 
     private Level level;
     private Node rootNode;
@@ -56,8 +57,7 @@ public class MapEditorState extends TypedBaseAppState<Application> {
     private Label lblMouse;
     private Label lblTile;
 
-    private record TileInfo(Tile a, Tile b, boolean flipped) {
-    }
+    private record TileInfo(Tile a, Tile b, boolean flipped) {}
 
     private final Map<Vector2f, TileInfo> tiles = new HashMap<>();
     private Vector2f boundsMin = Vector2f.ZERO.clone();
@@ -69,17 +69,21 @@ public class MapEditorState extends TypedBaseAppState<Application> {
 
     private boolean leftClicking = false;
     private boolean rightClicking = false;
+    private boolean firstLeftClicking = false;
+    private boolean firstRightClicking = false;
+
+    private Vector2f camOffset = Vector2f.ZERO.clone();
 
     private final ActionListener clickListener = (name, isPressed, tpf) -> {
-        if (isPressed) {
-            clickTile(false);
+        if (!leftClicking && isPressed) {
+            firstLeftClicking = true;
         }
         leftClicking = isPressed;
     };
 
     private final ActionListener rightClickListener = (name, isPressed, tpf) -> {
-        if (isPressed) {
-            clickTile(true);
+        if (!rightClicking && isPressed) {
+            firstRightClicking = true;
         }
         rightClicking = isPressed;
     };
@@ -97,17 +101,19 @@ public class MapEditorState extends TypedBaseAppState<Application> {
             return new TileInfo(a, b, false);
         });
         if (mouseCell.x < boundsMin.x) {
-            logger.info("Decreased x bounds from {} to {}", boundsMin.x, mouseCell.x);
+            //logger.info("Decreased x bounds from {} to {}", boundsMin.x, mouseCell.x);
             boundsMin.x = mouseCell.x;
+            camOffset.x = -boundsMin.x;
         } else if (mouseCell.x > boundsMax.x) {
-            logger.info("Increased x bounds from {} to {}", boundsMax.x, mouseCell.x);
+            //logger.info("Increased x bounds from {} to {}", boundsMax.x, mouseCell.x);
             boundsMax.x = mouseCell.x;
         }
         if (mouseCell.y < boundsMin.y) {
-            logger.info("Decreased y bounds from {} to {}", boundsMin.y, mouseCell.y);
+            //logger.info("Decreased y bounds from {} to {}", boundsMin.y, mouseCell.y);
             boundsMin.y = mouseCell.y;
+            camOffset.y = boundsMin.y;
         } else if (mouseCell.y > boundsMax.y) {
-            logger.info("Increased y bounds from {} to {}", boundsMax.y, mouseCell.y);
+            //logger.info("Increased y bounds from {} to {}", boundsMax.y, mouseCell.y);
             boundsMax.y = mouseCell.y;
         }
         updateEditorLevel();
@@ -122,6 +128,7 @@ public class MapEditorState extends TypedBaseAppState<Application> {
     protected void onInitialize(Application app) {
         appStateManager = app.getStateManager();
         inputManager = app.getInputManager();
+        camera = app.getCamera();
         rootNode = app.getRootNode();
         guiNode = app.getGuiNode();
 
@@ -188,12 +195,18 @@ public class MapEditorState extends TypedBaseAppState<Application> {
 
     private void loadLevel(String name) {
         level = Level.loadLevel(name);
-        syncLevel();
+        syncLevel(false);
     }
 
-    private void syncLevel() {
+    private void syncLevel(boolean saveCam) {
         if (level != null) {
+            Vector3f oldCam = camera.getLocation().clone();
             appStateManager.getState(MapRendererState.class).setLevel(level);
+            if (saveCam) {
+                logger.info("Offsetting camera by {}", camOffset);
+                camera.setLocation(oldCam.add(camOffset.x, camOffset.y, 0f));
+            }
+            camOffset = Vector2f.ZERO.clone();
             boundsMin = Vector2f.ZERO.clone();
             boundsMax = new Vector2f(level.getWidth() - 1f, level.getHeight() - 1f);
             lblWidth.setText(String.valueOf(level.getWidth()));
@@ -219,7 +232,7 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                 Vector2f editCell = new Vector2f(editX, editY);
                 TileInfo tileInfo = tiles.get(editCell);
                 if (tileInfo == null) {
-                    logger.info("No tile data at {} in editor", editCell);
+                    //logger.info("No tile data at {} in editor", editCell);
                     map1.add(Tile.EMPTY);
                     map2.add(Tile.EMPTY);
                 } else {
@@ -239,7 +252,7 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                 map2,
                 state,
                 Map.of());
-        syncLevel();
+        syncLevel(true);
     }
 
     private void saveLevel(String name) {
@@ -252,16 +265,15 @@ public class MapEditorState extends TypedBaseAppState<Application> {
 
     @Override
     public void update(float tpf) {
-        Camera cam = getApplication().getCamera();
-        float depth = cam.getViewToProjectionZ(cam.getLocation().z);
+        float depth = camera.getViewToProjectionZ(camera.getLocation().z);
         Vector2f mousePos = inputManager.getCursorPosition();
-        Vector3f mouseWorldPos = cam.getWorldCoordinates(new Vector2f(mousePos.x, mousePos.y), depth);
+        Vector3f mouseWorldPos = camera.getWorldCoordinates(new Vector2f(mousePos.x, mousePos.y), depth);
 
         int x = (int) FastMath.floor(mouseWorldPos.x + 0.5f);
         int y = (int) FastMath.floor(mouseWorldPos.y + 0.5f);
         cursor.setLocalTranslation(x, y, 0.1f);
 
-        Vector2f lastMouse = mouseCell.clone();
+        Vector2f lastMouseCell = mouseCell.clone();
 
         mouseCell = new Vector2f(x, -y);
         mouseCell.x = FastMath.floor(mouseCell.x);
@@ -269,11 +281,13 @@ public class MapEditorState extends TypedBaseAppState<Application> {
 
         lblMouse.setText(String.format("cell: (%d, %d)", (int) mouseCell.x, (int) mouseCell.y));
 
-        if ((leftClicking || rightClicking) && !lastMouse.equals(mouseCell)) {
+        if ((firstLeftClicking || firstRightClicking) || ((leftClicking || rightClicking) && !lastMouseCell.equals(mouseCell))) {
             if (leftClicking) {
+                firstLeftClicking = false;
                 clickTile(false);
             }
             if (rightClicking) {
+                firstRightClicking = false;
                 clickTile(true);
             }
 

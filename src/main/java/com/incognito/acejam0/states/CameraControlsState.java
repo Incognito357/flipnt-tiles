@@ -38,7 +38,7 @@ public class CameraControlsState extends TypedBaseAppState<Application> {
             camOrigin = Vector3f.ZERO.clone();
         }
         panning = isPressed;
-        inputManager.setCursorVisible(!panning);
+        //inputManager.setCursorVisible(!panning);
     };
 
     private final AnalogListener pan = (name, value, tpf) -> {
