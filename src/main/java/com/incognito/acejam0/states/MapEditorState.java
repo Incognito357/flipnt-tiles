@@ -7,8 +7,10 @@ import com.incognito.acejam0.utils.GlobalMaterials;
 import com.incognito.acejam0.utils.Mapper;
 import com.jme3.app.state.AppStateManager;
 import com.jme3.input.InputManager;
+import com.jme3.input.KeyInput;
 import com.jme3.input.MouseInput;
 import com.jme3.input.controls.ActionListener;
+import com.jme3.input.controls.KeyTrigger;
 import com.jme3.input.controls.MouseButtonTrigger;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.FastMath;
@@ -31,6 +33,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.List;
@@ -51,8 +54,10 @@ public class MapEditorState extends TypedBaseAppState<Application> {
     private Label lblWidth;
     private Label lblHeight;
     private Label lblMouse;
+    private Label lblTile;
 
-    private record TileInfo(Tile a, Tile b, boolean enabled) {}
+    private record TileInfo(Tile a, Tile b, boolean flipped) {
+    }
 
     private final Map<Vector2f, TileInfo> tiles = new HashMap<>();
     private Vector2f boundsMin = Vector2f.ZERO.clone();
@@ -60,27 +65,57 @@ public class MapEditorState extends TypedBaseAppState<Application> {
     private Vector2f mouseCell = Vector2f.ZERO.clone();
 
     private final Geometry cursor = new Geometry("", new WireBox(0.5f, 0.5f, 0f));
+    private Tile selectedTile = Tile.FLOOR;
 
-    private final ActionListener mouseListener = (name, isPressed, tpf) -> {
+    private boolean leftClicking = false;
+    private boolean rightClicking = false;
+
+    private final ActionListener clickListener = (name, isPressed, tpf) -> {
         if (isPressed) {
-            logger.info("Adding tile to {}", mouseCell);
-            tiles.put(mouseCell, new TileInfo(Tile.FLOOR, Tile.FLOOR, false));
-            if (mouseCell.x < boundsMin.x) {
-                logger.info("Decreased x bounds from {} to {}", boundsMin.x, mouseCell.x);
-                boundsMin.x = mouseCell.x;
-            } else if (mouseCell.x > boundsMax.x) {
-                logger.info("Increased x bounds from {} to {}", boundsMax.x, mouseCell.x);
-                boundsMax.x = mouseCell.x;
-            }
-            if (mouseCell.y < boundsMin.y) {
-                logger.info("Decreased y bounds from {} to {}", boundsMin.y, mouseCell.y);
-                boundsMin.y = mouseCell.y;
-            } else if (mouseCell.y > boundsMax.y) {
-                logger.info("Increased y bounds from {} to {}", boundsMax.y, mouseCell.y);
-                boundsMax.y = mouseCell.y;
-            }
-            updateEditorLevel();
+            clickTile(false);
         }
+        leftClicking = isPressed;
+    };
+
+    private final ActionListener rightClickListener = (name, isPressed, tpf) -> {
+        if (isPressed) {
+            clickTile(true);
+        }
+        rightClicking = isPressed;
+    };
+
+    private void clickTile(boolean rightClick) {
+        logger.info("Adding {} to {} at {}", selectedTile, rightClick ? "map2" : "map", mouseCell);
+        tiles.compute(mouseCell, (key, original) -> {
+            if (original != null) {
+                Tile a = rightClick ? original.a : selectedTile;
+                Tile b = rightClick ? selectedTile : original.b;
+                return new TileInfo(a, b, original.flipped);
+            }
+            Tile a = rightClick ? Tile.EMPTY : selectedTile;
+            Tile b = rightClick ? selectedTile : Tile.EMPTY;
+            return new TileInfo(a, b, false);
+        });
+        if (mouseCell.x < boundsMin.x) {
+            logger.info("Decreased x bounds from {} to {}", boundsMin.x, mouseCell.x);
+            boundsMin.x = mouseCell.x;
+        } else if (mouseCell.x > boundsMax.x) {
+            logger.info("Increased x bounds from {} to {}", boundsMax.x, mouseCell.x);
+            boundsMax.x = mouseCell.x;
+        }
+        if (mouseCell.y < boundsMin.y) {
+            logger.info("Decreased y bounds from {} to {}", boundsMin.y, mouseCell.y);
+            boundsMin.y = mouseCell.y;
+        } else if (mouseCell.y > boundsMax.y) {
+            logger.info("Increased y bounds from {} to {}", boundsMax.y, mouseCell.y);
+            boundsMax.y = mouseCell.y;
+        }
+        updateEditorLevel();
+    }
+
+    private final ActionListener tilePicker = (name, isPressed, tpf) -> {
+        selectedTile = Tile.values()[Integer.parseInt(name.split("-")[1])];
+        lblTile.setText("Tile: " + selectedTile.name());
     };
 
     @Override
@@ -105,10 +140,6 @@ public class MapEditorState extends TypedBaseAppState<Application> {
         gui.addChild(txtLevelName);
         gui.addChild(loadLevel, 1);
 
-        //Node separator = new Node();
-        //separator.attachChild(new Geometry("", new Line(Vector3f.ZERO, Vector3f.UNIT_X.mult(10f))));
-        //gui.addChild(separator);
-
         gui.addChild(new Label("Width"));
         lblWidth = new Label("");
         gui.addChild(lblWidth, 1);
@@ -120,13 +151,24 @@ public class MapEditorState extends TypedBaseAppState<Application> {
         lblMouse = new Label("");
         gui.addChild(lblMouse);
 
+        lblTile = new Label("Tile: " + selectedTile.name());
+        gui.addChild(lblTile);
+
         cursor.setMaterial(GlobalMaterials.getDebugMaterial(ColorRGBA.Yellow));
 
         rootNode.attachChild(cursor);
 
-        inputManager.addMapping("editor-tile", new MouseButtonTrigger(MouseInput.BUTTON_LEFT));
-
-        inputManager.addListener(mouseListener, "editor-tile");
+        Arrays.stream(Tile.values())
+                .map(Tile::ordinal)
+                .forEach(o -> {
+                    String name = "editor-" + o;
+                    inputManager.addMapping(name, new KeyTrigger(KeyInput.KEY_1 + o));
+                    inputManager.addListener(tilePicker, name);
+                });
+        inputManager.addMapping("editor-click", new MouseButtonTrigger(MouseInput.BUTTON_LEFT));
+        inputManager.addMapping("editor-rightclick", new MouseButtonTrigger(MouseInput.BUTTON_RIGHT));
+        inputManager.addListener(clickListener, "editor-click");
+        inputManager.addListener(rightClickListener, "editor-rightclick");
     }
 
     @Override
@@ -153,7 +195,7 @@ public class MapEditorState extends TypedBaseAppState<Application> {
         if (level != null) {
             appStateManager.getState(MapRendererState.class).setLevel(level);
             boundsMin = Vector2f.ZERO.clone();
-            boundsMax = new Vector2f(level.getWidth() - 1, level.getHeight() - 1);
+            boundsMax = new Vector2f(level.getWidth() - 1f, level.getHeight() - 1f);
             lblWidth.setText(String.valueOf(level.getWidth()));
             lblHeight.setText(String.valueOf(level.getHeight()));
             tiles.clear();
@@ -171,9 +213,9 @@ public class MapEditorState extends TypedBaseAppState<Application> {
         List<Tile> map2 = new ArrayList<>();
         BitSet state = new BitSet();
         int y = 0;
-        for (int editY = (int)boundsMin.y; editY <= boundsMax.y; editY++) {
+        for (int editY = (int) boundsMin.y; editY <= boundsMax.y; editY++) {
             int x = 0;
-            for (int editX = (int)boundsMin.x; editX <= boundsMax.x; editX++) {
+            for (int editX = (int) boundsMin.x; editX <= boundsMax.x; editX++) {
                 Vector2f editCell = new Vector2f(editX, editY);
                 TileInfo tileInfo = tiles.get(editCell);
                 if (tileInfo == null) {
@@ -183,7 +225,7 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                 } else {
                     map1.add(tileInfo.a);
                     map2.add(tileInfo.b);
-                    state.set(y * ((int)size.x + 1) + x, tileInfo.enabled);
+                    state.set(y * ((int) size.x + 1) + x, tileInfo.flipped);
                 }
                 x++;
             }
@@ -191,8 +233,8 @@ public class MapEditorState extends TypedBaseAppState<Application> {
         }
         level = new Level(
                 txtLevelName.getText(),
-                (int)size.x + 1,
-                (int)size.y + 1,
+                (int) size.x + 1,
+                (int) size.y + 1,
                 map1,
                 map2,
                 state,
@@ -212,18 +254,29 @@ public class MapEditorState extends TypedBaseAppState<Application> {
     public void update(float tpf) {
         Camera cam = getApplication().getCamera();
         float depth = cam.getViewToProjectionZ(cam.getLocation().z);
-        Vector2f click2d = inputManager.getCursorPosition();
-        Vector3f click3d = cam.getWorldCoordinates(new Vector2f(click2d.x, click2d.y), depth);
-        Vector2f size = boundsMax.subtract(boundsMin);
+        Vector2f mousePos = inputManager.getCursorPosition();
+        Vector3f mouseWorldPos = cam.getWorldCoordinates(new Vector2f(mousePos.x, mousePos.y), depth);
 
-        int x = (int)FastMath.floor(click3d.x + 0.5f);
-        int y = (int)FastMath.floor(click3d.y + 0.5f);
+        int x = (int) FastMath.floor(mouseWorldPos.x + 0.5f);
+        int y = (int) FastMath.floor(mouseWorldPos.y + 0.5f);
         cursor.setLocalTranslation(x, y, 0.1f);
+
+        Vector2f lastMouse = mouseCell.clone();
 
         mouseCell = new Vector2f(x, -y);
         mouseCell.x = FastMath.floor(mouseCell.x);
         mouseCell.y = FastMath.floor(mouseCell.y);
 
-        lblMouse.setText(String.format("cell: (%d, %d)", (int)mouseCell.x, (int)mouseCell.y));
+        lblMouse.setText(String.format("cell: (%d, %d)", (int) mouseCell.x, (int) mouseCell.y));
+
+        if ((leftClicking || rightClicking) && !lastMouse.equals(mouseCell)) {
+            if (leftClicking) {
+                clickTile(false);
+            }
+            if (rightClicking) {
+                clickTile(true);
+            }
+
+        }
     }
 }
