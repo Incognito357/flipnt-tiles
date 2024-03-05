@@ -16,17 +16,20 @@ import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 import com.jme3.scene.shape.CenterQuad;
-import com.jme3.scene.shape.Quad;
 import com.simsilica.lemur.anim.AbstractTween;
 import com.simsilica.lemur.anim.AnimationState;
 import com.simsilica.lemur.anim.SpatialTweens;
 import com.simsilica.lemur.anim.Tween;
 import com.simsilica.lemur.anim.Tweens;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class MapRendererState extends TypedBaseAppState<Application> {
+
+    private static final Logger logger = LogManager.getLogger();
 
     private Level level;
 
@@ -86,11 +89,11 @@ public class MapRendererState extends TypedBaseAppState<Application> {
             int i = y * level.getWidth() + x;
             int state = change.getStateChange();
             Tile tile = change.getTileChange();
-            Spatial node = rootNode.getChild(i);
+            Spatial node = tiles.getChild(i);
 
             boolean oldState = level.isTileFlipped(x, y);
             Tile oldTile = level.getTile(x, y);
-            if (state == 2 || (state == -1 && oldState) || state == 1 && !oldState) {
+            if (state == 2 || (state == -1 && !oldState) || (state == 1 && oldState)) {
                 tweens.add(SpatialTweens.rotate(
                         node, null,
                         oldState ? Quaternion.IDENTITY
@@ -123,6 +126,7 @@ public class MapRendererState extends TypedBaseAppState<Application> {
             }
 
         }
+        logger.info("Adding {} tweens", tweens.size());
         AnimationState.getDefaultInstance().add(Tweens.parallel(tweens.toArray(new Tween[0])));
     }
 }

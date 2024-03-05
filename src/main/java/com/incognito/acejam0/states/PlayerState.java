@@ -1,10 +1,12 @@
 package com.incognito.acejam0.states;
 
 import com.incognito.acejam0.Application;
+import com.incognito.acejam0.domain.Action;
 import com.incognito.acejam0.domain.InputBinding;
 import com.incognito.acejam0.domain.Level;
 import com.incognito.acejam0.domain.Tile;
 import com.incognito.acejam0.utils.GlobalMaterials;
+import com.jme3.app.state.AppStateManager;
 import com.jme3.input.InputManager;
 import com.jme3.input.JoyInput;
 import com.jme3.input.KeyInput;
@@ -21,8 +23,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class PlayerState extends TypedBaseAppState<Application> {
 
@@ -32,29 +36,44 @@ public class PlayerState extends TypedBaseAppState<Application> {
     private Node rootNode;
     private final Node playersNode = new Node();
     private final List<Map.Entry<Spatial, Vector2f>> players = new ArrayList<>();
+    private final Map<InputBinding, AtomicInteger> actionStates = new HashMap<>();
 
     private InputManager inputManager;
+    private AppStateManager appStateManager;
+
     private final Map<InputBinding, ActionListener> listeners = Map.of(
             InputBinding.UP, (name, isPressed, tpf) -> {
                 if (isPressed) {
                     move(0, -1);
+                    doAction(InputBinding.UP);
                 }
             },
             InputBinding.DOWN, (name, isPressed, tpf) -> {
                 if (isPressed) {
                     move(0, 1);
+                    doAction(InputBinding.DOWN);
                 }
             },
             InputBinding.LEFT, (name, isPressed, tpf) -> {
                 if (isPressed) {
                     move(-1, 0);
+                    doAction(InputBinding.LEFT);
                 }
             },
             InputBinding.RIGHT, (name, isPressed, tpf) -> {
                 if (isPressed) {
                     move(1, 0);
+                    doAction(InputBinding.RIGHT);
                 }
             });
+
+    private void doAction(InputBinding up) {
+        AtomicInteger state = actionStates.getOrDefault(up, new AtomicInteger(0));
+        List<Action> actions = level.getActions().getOrDefault(up.ordinal(), List.of());
+        if (!actions.isEmpty() && state.get() < actions.size() && state.get() >= 0) {
+            appStateManager.getState(MapRendererState.class).update(actions.get(state.getAndIncrement()));
+        }
+    }
 
     private void move(int dx, int dy) {
         for (Map.Entry<Spatial, Vector2f> kvp : players) {
@@ -64,8 +83,6 @@ public class PlayerState extends TypedBaseAppState<Application> {
 
             int nx = x + dx;
             int ny = y + dy;
-
-            logger.info("Moving to ({}, {})", nx, ny);
 
             if (nx < 0 || ny < 0 || nx >= level.getWidth() || ny >= level.getHeight()) {
                 continue;
@@ -90,6 +107,7 @@ public class PlayerState extends TypedBaseAppState<Application> {
     protected void onInitialize(Application app) {
         rootNode = app.getRootNode();
         inputManager = app.getInputManager();
+        appStateManager = app.getStateManager();
 
         List<Tile> map = level.getMap();
         for (int i = 0; i < map.size(); i++) {

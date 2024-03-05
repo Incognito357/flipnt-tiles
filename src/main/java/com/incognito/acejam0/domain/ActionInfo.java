@@ -8,7 +8,7 @@ import java.util.Objects;
 public class ActionInfo {
     private final int x;
     private final int y;
-    private final int stateChange;  //-1 to disable, 1 to enable, 0 to keep original state
+    private final int stateChange;  //2 to flip, -1 to force flip down, 1 to force flip up, 0 to keep original state
     private final Tile tileChange;  //ignores if null
 
     @JsonCreator

@@ -57,5 +57,18 @@
     0
   ],
   "state": "",
-  "actions": {}
+  "actions": {
+    "0": [
+      {
+        "actions": [
+          {
+            "x": 0,
+            "y": 1,
+            "stateChange": -1,
+            "tileChange": null
+          }
+        ]
+      }
+    ]
+  }
 }
