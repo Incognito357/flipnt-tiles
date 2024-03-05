@@ -153,6 +153,30 @@ public class Level {
         return actions;
     }
 
+    public void performActions(Action change) {
+        for (ActionInfo a : change.getActions()) {
+            int stateChange = a.getStateChange();
+            int i = a.getY() * width + a.getX();
+
+            Tile t = a.getTileChange();
+            if (t != null) {
+                if (state.get(i)) {
+                    map2.set(i, t);
+                } else {
+                    map.set(i, t);
+                }
+            }
+
+            if (stateChange == 2) {
+                state.flip(i);
+            } else if (stateChange == -1) {
+                state.clear(i);
+            } else if (stateChange == 1) {
+                state.set(i);
+            }
+        }
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

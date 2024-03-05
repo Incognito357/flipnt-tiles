@@ -237,7 +237,6 @@ public class MapEditorState extends TypedBaseAppState<Application> {
             Vector3f oldCam = camera.getLocation().clone();
             appStateManager.getState(MapRendererState.class).setLevel(level);
             if (saveCam) {
-                logger.info("Offsetting camera by {}", camOffset);
                 camera.setLocation(oldCam.add(camOffset.x, camOffset.y, 0f));
             }
             camOffset = Vector2f.ZERO.clone();
@@ -268,7 +267,6 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                 Vector2f editCell = new Vector2f(editX, editY);
                 TileInfo tileInfo = tiles.get(editCell);
                 if (tileInfo == null) {
-                    //logger.info("No tile data at {} in editor", editCell);
                     map1.add(Tile.EMPTY);
                     map2.add(Tile.EMPTY);
                 } else {
@@ -307,19 +305,15 @@ public class MapEditorState extends TypedBaseAppState<Application> {
             return new TileInfo(a, b, false);
         });
         if (mouseCell.x < boundsMin.x) {
-            //logger.info("Decreased x bounds from {} to {}", boundsMin.x, mouseCell.x);
             boundsMin.x = mouseCell.x;
             camOffset.x = -boundsMin.x;
         } else if (mouseCell.x > boundsMax.x) {
-            //logger.info("Increased x bounds from {} to {}", boundsMax.x, mouseCell.x);
             boundsMax.x = mouseCell.x;
         }
         if (mouseCell.y < boundsMin.y) {
-            //logger.info("Decreased y bounds from {} to {}", boundsMin.y, mouseCell.y);
             boundsMin.y = mouseCell.y;
             camOffset.y = boundsMin.y;
         } else if (mouseCell.y > boundsMax.y) {
-            //logger.info("Increased y bounds from {} to {}", boundsMax.y, mouseCell.y);
             boundsMax.y = mouseCell.y;
         }
         updateEditorLevel();

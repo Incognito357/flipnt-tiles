@@ -34,7 +34,8 @@ public class MapRendererState extends TypedBaseAppState<Application> {
     private Level level;
 
     private Node rootNode;
-    private final Node tiles = new Node();
+    private final Node tiles1 = new Node();
+    private final Node tiles2 = new Node();
 
     public MapRendererState(Level level) {
         this.level = level;
@@ -49,7 +50,7 @@ public class MapRendererState extends TypedBaseAppState<Application> {
 
     @Override
     protected void onCleanup(Application app) {
-        rootNode.detachChild(tiles);
+        rootNode.detachChild(tiles1);
     }
 
     public void setLevel(Level level) {
@@ -58,27 +59,41 @@ public class MapRendererState extends TypedBaseAppState<Application> {
     }
 
     public void reloadLevel() {
-        rootNode.detachChild(tiles);
-        tiles.detachAllChildren();
+        rootNode.detachChild(tiles1);
+        rootNode.detachChild(tiles2);
+        tiles1.detachAllChildren();
+        tiles2.detachAllChildren();
 
         List<Tile> map = level.getMap();
+        List<Tile> map2 = level.getMap2();
         for (int i = 0; i < map.size(); i++) {
             Tile tile = map.get(i);
+            Tile tile2 = map2.get(i);
             int x = i % level.getWidth();
             int y = i / level.getWidth();
-            Geometry g = new Geometry(String.format("x:%d,y:%d", x, y), new CenterQuad(1, 1));
+
+            Geometry g = new Geometry("", new CenterQuad(1, 1));
             g.setMaterial(GlobalMaterials.getTileMaterial(tile));
             g.setLocalTranslation(x, -y, 0);
+
+            Geometry g2 = new Geometry("", new CenterQuad(1, 1));
+            g2.setMaterial(GlobalMaterials.getTileMaterial(tile2));
+            g2.setLocalTranslation(x, -y, 0);
+
             if (level.isTileFlipped(x, y)) {
                 g.rotate(0, FastMath.PI, 0);
+            } else {
+                g2.rotate(0, FastMath.PI, 0);
             }
 
-            tiles.attachChild(g);
+            tiles1.attachChild(g);
+            tiles2.attachChild(g2);
         }
         Camera camera = getApplication().getCamera();
         camera.setLocation(new Vector3f(level.getWidth() / 2.0f - 0.5f, -level.getHeight() / 2.0f + 0.5f, camera.getLocation().z));
 
-        rootNode.attachChild(tiles);
+        rootNode.attachChild(tiles1);
+        rootNode.attachChild(tiles2);
     }
 
     public void update(Action action) {
@@ -89,30 +104,39 @@ public class MapRendererState extends TypedBaseAppState<Application> {
             int i = y * level.getWidth() + x;
             int state = change.getStateChange();
             Tile tile = change.getTileChange();
-            Spatial node = tiles.getChild(i);
+            Spatial node1 = tiles1.getChild(i);
+            Spatial node2 = tiles2.getChild(i);
 
             boolean oldState = level.isTileFlipped(x, y);
             Tile oldTile = level.getTile(x, y);
+            Tile oldTile2 = level.getTile2(x, y);
             if (state == 2 || (state == -1 && !oldState) || (state == 1 && oldState)) {
                 tweens.add(SpatialTweens.rotate(
-                        node, null,
+                        node1, null,
                         oldState ? Quaternion.IDENTITY
+                                : new Quaternion().fromAngleNormalAxis(FastMath.PI, Vector3f.UNIT_Y),
+                        0.75));
+                tweens.add(SpatialTweens.rotate(
+                        node2, null,
+                        !oldState ? Quaternion.IDENTITY
                                 : new Quaternion().fromAngleNormalAxis(FastMath.PI, Vector3f.UNIT_Y),
                         0.75));
             }
 
-            if (tile != null && tile != oldTile) {
-                Material origin = GlobalMaterials.getTileMaterial(oldTile);
+            Tile tileToChange = oldState ? oldTile2 : oldTile;
+            Spatial nodeToChange = oldState ? node2 : node1;
+            if (tile != null && tile != tileToChange) {
+                Material origin = GlobalMaterials.getTileMaterial(tileToChange);
                 Material target = GlobalMaterials.getTileMaterial(tile);
                 Material mat = origin.clone();
                 ColorRGBA originCol = origin.getParamValue("Color");
                 ColorRGBA targetCol = target.getParamValue("Color");
-                node.setMaterial(mat);
+                nodeToChange.setMaterial(mat);
                 tweens.add(new AbstractTween(0.75f) {
                     @Override
                     protected void doInterpolate(double t) {
                         if (t == 1) {
-                            node.setMaterial(target);
+                            nodeToChange.setMaterial(target);
                             return;
                         }
                         ColorRGBA lerped = ColorRGBA.fromRGBA255(
@@ -124,8 +148,10 @@ public class MapRendererState extends TypedBaseAppState<Application> {
                     }
                 });
             }
-
         }
+
+        level.performActions(action);
+
         logger.info("Adding {} tweens", tweens.size());
         AnimationState.getDefaultInstance().add(Tweens.parallel(tweens.toArray(new Tween[0])));
     }

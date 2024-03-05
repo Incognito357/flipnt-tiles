@@ -67,9 +67,9 @@ public class PlayerState extends TypedBaseAppState<Application> {
                 }
             });
 
-    private void doAction(InputBinding up) {
-        AtomicInteger state = actionStates.getOrDefault(up, new AtomicInteger(0));
-        List<Action> actions = level.getActions().getOrDefault(up.ordinal(), List.of());
+    private void doAction(InputBinding dir) {
+        AtomicInteger state = actionStates.computeIfAbsent(dir, d -> new AtomicInteger(0));
+        List<Action> actions = level.getActions().getOrDefault(dir.ordinal(), List.of());
         if (!actions.isEmpty() && state.get() < actions.size() && state.get() >= 0) {
             appStateManager.getState(MapRendererState.class).update(actions.get(state.getAndIncrement()));
         }
