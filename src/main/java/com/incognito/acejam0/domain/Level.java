@@ -7,6 +7,7 @@ import com.incognito.acejam0.utils.Mapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -172,15 +173,19 @@ public class Level {
     }
 
     public static Level loadLevel(String name) {
-        try (InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream("levels/" + name + ".json")) {
-            if (in == null) {
-                logger.error("Could not load level {}", name);
-                return null;
-            }
+        try (InputStream in = new FileInputStream("levels/" + name + ".json")) {
             return Mapper.getMapper().readValue(in, Level.class);
         } catch (IOException e) {
-            logger.error("Could not load level {}", name, e);
-            return null;
+            try (InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream("levels/" + name + ".json")) {
+                if (in == null) {
+                    logger.error("Could not load level {}", name);
+                    return null;
+                }
+                return Mapper.getMapper().readValue(in, Level.class);
+            } catch (IOException e2) {
+                logger.error("Could not load level {}", name, e2);
+                return null;
+            }
         }
     }
 }

@@ -138,14 +138,22 @@ public class MapEditorState extends TypedBaseAppState<Application> {
         guiNode.attachChild(gui);
 
         txtLevelName = new TextField("");
-        Button loadLevel = new Button("Load");
-        loadLevel.addClickCommand(btn -> {
+        Button btnLoadLevel = new Button("Load");
+        btnLoadLevel.addClickCommand(btn -> {
             if (txtLevelName.getText() != null && !txtLevelName.getText().isBlank()) {
                 loadLevel(txtLevelName.getText());
             }
         });
+        Button btnSaveLevel = new Button("Save");
+        btnSaveLevel.addClickCommand(btn -> {
+            if (txtLevelName.getText() != null && !txtLevelName.getText().isBlank()) {
+                saveLevel(txtLevelName.getText());
+            }
+        });
+
         gui.addChild(txtLevelName);
-        gui.addChild(loadLevel, 1);
+        gui.addChild(btnLoadLevel, 1);
+        gui.addChild(btnSaveLevel, 2);
 
         gui.addChild(new Label("Width"));
         lblWidth = new Label("");
@@ -181,6 +189,7 @@ public class MapEditorState extends TypedBaseAppState<Application> {
     @Override
     protected void onCleanup(Application app) {
         guiNode.detachChild(gui);
+        rootNode.detachChild(cursor);
     }
 
     @Override
@@ -191,6 +200,14 @@ public class MapEditorState extends TypedBaseAppState<Application> {
     @Override
     protected void onDisable() {
         GuiGlobals.getInstance().releaseCursorEnabled(gui);
+    }
+
+    private void saveLevel(String name) {
+        try {
+            Mapper.getMapper().writeValue(new File("levels/" + name + ".json"), level);
+        } catch (IOException e) {
+            logger.error("Could not save level {}.json", name, e);
+        }
     }
 
     private void loadLevel(String name) {
@@ -253,14 +270,6 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                 state,
                 Map.of());
         syncLevel(true);
-    }
-
-    private void saveLevel(String name) {
-        try {
-            Mapper.getMapper().writeValue(new File(name + ".json"), level);
-        } catch (IOException e) {
-            logger.error("Could not save level {}.json", name, e);
-        }
     }
 
     @Override
