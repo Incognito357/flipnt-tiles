@@ -5,7 +5,6 @@ import com.incognito.acejam0.states.CameraControlsState;
 import com.incognito.acejam0.states.MapEditorState;
 import com.incognito.acejam0.states.MapRendererState;
 import com.incognito.acejam0.utils.Builder;
-import com.incognito.acejam0.utils.Mapper;
 import com.jme3.app.SimpleApplication;
 import com.jme3.system.AppSettings;
 import com.simsilica.lemur.GuiGlobals;
@@ -13,8 +12,9 @@ import com.simsilica.lemur.anim.AnimationState;
 import com.simsilica.lemur.style.BaseStyles;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.util.BitSet;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 public class Application extends SimpleApplication {
@@ -34,10 +34,7 @@ public class Application extends SimpleApplication {
         app.setDisplayFps(false);
         app.setDisplayStatView(false);
 
-        Level test = Level.loadLevel("test");
-        if (test != null) {
-            app.getStateManager().attach(new MapRendererState(test));
-        }
+        app.getStateManager().attach(new MapRendererState(new Level("", 0, 0, List.of(), List.of(), new BitSet(), Map.of())));
 
         APP = app;
 

@@ -65,17 +65,15 @@ public class PlayerState extends TypedBaseAppState<Application> {
             int nx = x + dx;
             int ny = y + dy;
 
-            if (nx < 0 || ny < 0 || nx >= level.getWidth() || ny >= level.getHeight()) {
-                return;
-            }
+            logger.info("Moving to ({}, {})", nx, ny);
 
-            if (!level.isTileFlipped(nx, ny)) {
-                return;
+            if (nx < 0 || ny < 0 || nx >= level.getWidth() || ny >= level.getHeight()) {
+                continue;
             }
 
             Tile tile = level.getTile(nx, ny);
             if (tile == Tile.WALL || tile == Tile.EMPTY) {
-                return;
+                continue;
             }
 
             p.x = nx;
@@ -102,12 +100,11 @@ public class PlayerState extends TypedBaseAppState<Application> {
                 Geometry g = new Geometry(String.format("player-x:%d,y:%d", x, y), new Sphere(16, 2, 0.4f));
                 g.setMaterial(GlobalMaterials.getPlayerMaterial());
                 g.rotate(FastMath.HALF_PI, 0, 0);
-                g.setLocalTranslation(x + 0.5f, -y - 0.5f, 0);
+                g.setLocalTranslation(x, -y, 0);
                 players.add(Map.entry(g, new Vector2f(x, y)));
                 playersNode.attachChild(g);
             }
         }
-        playersNode.setLocalTranslation(-level.getWidth() / 2.0f, level.getHeight() / 2.0f, 0);
 
         rootNode.attachChild(playersNode);
 
