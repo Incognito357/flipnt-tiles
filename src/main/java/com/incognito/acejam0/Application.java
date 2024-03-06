@@ -1,6 +1,7 @@
 package com.incognito.acejam0;
 
 import com.incognito.acejam0.domain.Level;
+import com.incognito.acejam0.states.BackgroundRendererState;
 import com.incognito.acejam0.states.CameraControlsState;
 import com.incognito.acejam0.states.MapEditorState;
 import com.incognito.acejam0.states.MapRendererState;
@@ -30,11 +31,11 @@ public class Application extends SimpleApplication {
                 .with(AppSettings::setTitle, "Acerola Jam 0 - Aberration")
                 .with(AppSettings::setResolution, 1440, 810)    // TODO: get from args or config file
                 .build());
-        app.getStateManager().attachAll(new AnimationState(), new CameraControlsState(), new MapEditorState());
+        app.getStateManager().attachAll(new BackgroundRendererState(), new AnimationState(), new CameraControlsState());
         app.setDisplayFps(false);
         app.setDisplayStatView(false);
 
-        app.getStateManager().attach(new MapRendererState(new Level("", 0, 0, List.of(), List.of(), new BitSet(), Map.of())));
+        //app.getStateManager().attachAll(new MapEditorState(), new MapRendererState(new Level("", 0, 0, List.of(), List.of(), new BitSet(), Map.of())));
 
         APP = app;
 

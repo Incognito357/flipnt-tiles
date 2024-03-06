@@ -1,6 +1,8 @@
 package com.incognito.acejam0.states;
 
 import com.incognito.acejam0.Application;
+import com.incognito.acejam0.domain.Action;
+import com.incognito.acejam0.domain.ActionInfo;
 import com.incognito.acejam0.domain.Level;
 import com.incognito.acejam0.domain.Tile;
 import com.incognito.acejam0.utils.GlobalMaterials;
@@ -38,6 +40,7 @@ import java.util.BitSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 public class MapEditorState extends TypedBaseAppState<Application> {
 
@@ -74,7 +77,8 @@ public class MapEditorState extends TypedBaseAppState<Application> {
 
     private Vector2f camOffset = Vector2f.ZERO.clone();
 
-    private record TileInfo(Tile a, Tile b, boolean flipped) {}
+    private record TileInfo(Tile a, Tile b, boolean flipped) {
+    }
 
     private final ActionListener clickListener = (name, isPressed, tpf) -> {
         if (!leftClicking && isPressed) {
@@ -141,18 +145,29 @@ public class MapEditorState extends TypedBaseAppState<Application> {
         gui.addChild(lblTile);
 
         Button btnPlay = new Button("Play");
+        Button btnFlip = new Button("Flip Map");
         btnPlay.addClickCommand(btn -> {
             if (playing) {
                 btn.setText("Play");
                 appStateManager.detach(appStateManager.getState(PlayerState.class));
+                btnFlip.setEnabled(true);
             } else {
                 btn.setText("Editor");
                 appStateManager.attach(new PlayerState(level));
                 GuiGlobals.getInstance().releaseFocus(guiNode);
+                btnFlip.setEnabled(false);
             }
             playing = !playing;
         });
         gui.addChild(btnPlay);
+
+        btnFlip.addClickCommand(btn -> {
+            List<ActionInfo> flips = IntStream.range(0, level.getMap().size())
+                    .mapToObj(i -> new ActionInfo(i % level.getWidth(), i / level.getWidth(), 2, null))
+                    .toList();
+            appStateManager.getState(MapRendererState.class).update(new Action(flips));
+        });
+        gui.addChild(btnFlip);
 
         cursor.setMaterial(GlobalMaterials.getDebugMaterial(ColorRGBA.Yellow));
         bounds.setMaterial(GlobalMaterials.getDebugMaterial(new ColorRGBA(0, 0, 0.25f, 1)));

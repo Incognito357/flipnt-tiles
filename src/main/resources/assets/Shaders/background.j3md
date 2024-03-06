@@ -1,0 +1,17 @@
+MaterialDef background {
+    MaterialParameters {
+        Color Color (Color)
+    }
+
+    Technique {
+        VertexShader GLSL310 GLSL300 GLSL100 GLSL150:   assets/Shaders/background.vert
+        FragmentShader GLSL310 GLSL300 GLSL100 GLSL150: assets/Shaders/background.frag
+
+        WorldParameters {
+            WorldViewProjectionMatrix
+            ViewProjectionMatrix
+            ViewMatrix
+            Time
+        }
+    }
+}
