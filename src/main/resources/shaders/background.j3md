@@ -1,11 +1,15 @@
 MaterialDef background {
     MaterialParameters {
         Color Color (Color)
+        Int Seed
+        Float Speed
+        Float Scale
+        Float Strength
     }
 
     Technique {
-        VertexShader GLSL310 GLSL300 GLSL100 GLSL150:   assets/Shaders/background.vert
-        FragmentShader GLSL310 GLSL300 GLSL100 GLSL150: assets/Shaders/background.frag
+        VertexShader GLSL310 GLSL300 GLSL100 GLSL150:   shaders/background.vert
+        FragmentShader GLSL310 GLSL300 GLSL100 GLSL150: shaders/background.frag
 
         WorldParameters {
             WorldViewProjectionMatrix

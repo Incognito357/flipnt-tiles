@@ -36,6 +36,7 @@ public class MapRendererState extends TypedBaseAppState<Application> {
     private Node rootNode;
     private final Node tiles1 = new Node();
     private final Node tiles2 = new Node();
+    private boolean editing = false;
 
     public MapRendererState(Level level) {
         this.level = level;
@@ -73,11 +74,11 @@ public class MapRendererState extends TypedBaseAppState<Application> {
             int y = i / level.getWidth();
 
             Geometry g = new Geometry("", new CenterQuad(1, 1));
-            g.setMaterial(GlobalMaterials.getTileMaterial(tile));
+            g.setMaterial(GlobalMaterials.getTileMaterial(!editing && tile == Tile.START ? Tile.FLOOR : tile));
             g.setLocalTranslation(x, -y, 0);
 
             Geometry g2 = new Geometry("", new CenterQuad(1, 1));
-            g2.setMaterial(GlobalMaterials.getTileMaterial(tile2));
+            g2.setMaterial(GlobalMaterials.getTileMaterial(!editing && tile == Tile.START ? Tile.FLOOR : tile2));
             g2.setLocalTranslation(x, -y, 0);
 
             if (level.isTileFlipped(x, y)) {
@@ -154,5 +155,13 @@ public class MapRendererState extends TypedBaseAppState<Application> {
 
         logger.info("Adding {} tweens", tweens.size());
         AnimationState.getDefaultInstance().add(Tweens.parallel(tweens.toArray(new Tween[0])));
+    }
+
+    public boolean isEditing() {
+        return editing;
+    }
+
+    public void setEditing(boolean editing) {
+        this.editing = editing;
     }
 }

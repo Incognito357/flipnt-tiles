@@ -1,8 +1,12 @@
 #import "Common/ShaderLib/GLSLCompat.glsllib"
-#import "assets/Shaders/FastNoiseLite.glsl"
+#import "shaders/FastNoiseLite.glsl"
 
 uniform float g_Time;
 uniform vec4 m_Color;
+uniform int m_Seed;
+uniform float m_Speed;
+uniform float m_Scale;
+uniform float m_Strength;
 
 in vec4 gl_FragCoord;
 
@@ -12,25 +16,26 @@ float fbm(in fnl_state _state, in fnl_state _state2, in vec2 _st, in float _t) {
 }
 
 void main() {
-    fnl_state state = fnlCreateState(1337);
+    fnl_state state = fnlCreateState(m_Seed);
     state.noise_type = FNL_NOISE_PERLIN;
     state.fractal_type = FNL_FRACTAL_FBM;
-    state.frequency = .0075f;
+    state.frequency = .0075f * m_Scale;
     state.octaves = 5;
     state.lacunarity = 2.0f;
     state.gain = .5f;
 
-    fnl_state state2 = fnlCreateState(1357);
+    fnl_state state2 = fnlCreateState(m_Seed - 1);
     state2.noise_type = FNL_NOISE_OPENSIMPLEX2;
     state2.fractal_type = FNL_FRACTAL_DOMAIN_WARP_PROGRESSIVE;
-    state2.domain_warp_type= FNL_DOMAIN_WARP_OPENSIMPLEX2;
+    state2.domain_warp_type = FNL_DOMAIN_WARP_OPENSIMPLEX2;
+    state2.domain_warp_amp = m_Strength;
     state2.frequency = .01f;
     state2.octaves = 4;
     state2.lacunarity = 2.0f;
     state2.gain = .5f;
 
     //float noise = fnlGetNoise3D(state, gl_FragCoord.x, g_Time * 10.0, gl_FragCoord.y) / 2.f + 0.5f;
-    float f = fbm(state, state2, gl_FragCoord.xy, g_Time * 7.5f);
+    float f = fbm(state, state2, gl_FragCoord.xy, g_Time * m_Speed);
     //gl_FragColor = vec4(noise, noise, noise, 1.0) * m_Color;
 
 //    vec2 st = gl_FragCoord.xy;
@@ -56,7 +61,7 @@ void main() {
 //                vec3(0.666667, 1, 1),
 //                clamp(length(r.x), 0.0, 1.0));
 
-    gl_FragColor = vec4((f * f * f + 0.6 * f * f + 0.5 * f) * m_Color.rgb, 1.);
+    gl_FragColor = vec4((f * f * f + 0.6 * f * f + 0.5 * f) * m_Color.rgb, m_Color.a);
 
     // Output to screen
     //gl_FragColor = vec4(noise, noise, noise, 1.0) * m_Color;

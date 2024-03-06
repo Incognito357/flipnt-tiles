@@ -155,6 +155,7 @@ public class PlayerState extends TypedBaseAppState<Application> {
 
     private void removeListener(InputManager inputManager, InputBinding mapping) {
         inputManager.removeListener(listeners.get(mapping));
+        inputManager.deleteMapping(mapping.name());
     }
 
     @Override
@@ -164,9 +165,5 @@ public class PlayerState extends TypedBaseAppState<Application> {
         removeListener(inputManager, InputBinding.DOWN);
         removeListener(inputManager, InputBinding.LEFT);
         removeListener(inputManager, InputBinding.RIGHT);
-    }
-
-    public void setLevel(Level level) {
-        this.level = level;
     }
 }

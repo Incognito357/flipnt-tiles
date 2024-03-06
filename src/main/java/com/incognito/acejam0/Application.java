@@ -35,7 +35,7 @@ public class Application extends SimpleApplication {
         app.setDisplayFps(false);
         app.setDisplayStatView(false);
 
-        //app.getStateManager().attachAll(new MapEditorState(), new MapRendererState(new Level("", 0, 0, List.of(), List.of(), new BitSet(), Map.of())));
+        app.getStateManager().attachAll(new MapEditorState(), new MapRendererState(new Level("", 0, 0, List.of(), List.of(), new BitSet(), Map.of())));
 
         APP = app;
 

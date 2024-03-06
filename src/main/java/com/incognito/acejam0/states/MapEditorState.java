@@ -51,6 +51,7 @@ public class MapEditorState extends TypedBaseAppState<Application> {
     private Camera camera;
 
     private Level level;
+    private Level prePlayLevel;
     private Node rootNode;
     private Node guiNode;
     private Container gui;
@@ -151,13 +152,26 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                 btn.setText("Play");
                 appStateManager.detach(appStateManager.getState(PlayerState.class));
                 btnFlip.setEnabled(true);
+                level = prePlayLevel;
+                syncLevel(true);
             } else {
                 btn.setText("Editor");
                 appStateManager.attach(new PlayerState(level));
                 GuiGlobals.getInstance().releaseFocus(guiNode);
                 btnFlip.setEnabled(false);
+                prePlayLevel = new Level(
+                        level.getTitle(),
+                        level.getWidth(),
+                        level.getHeight(),
+                        level.getMap(),
+                        level.getMap2(),
+                        BitSet.valueOf(level.getState().toByteArray()),
+                        level.getActions());
             }
             playing = !playing;
+            MapRendererState renderer = appStateManager.getState(MapRendererState.class);
+            renderer.setEditing(!playing);
+            renderer.reloadLevel();
         });
         gui.addChild(btnPlay);
 
@@ -185,6 +199,8 @@ public class MapEditorState extends TypedBaseAppState<Application> {
         inputManager.addMapping("editor-rightclick", new MouseButtonTrigger(MouseInput.BUTTON_RIGHT));
         inputManager.addListener(clickListener, "editor-click");
         inputManager.addListener(rightClickListener, "editor-rightclick");
+
+        appStateManager.getState(MapRendererState.class).setEditing(true);
     }
 
     @Override
@@ -293,6 +309,9 @@ public class MapEditorState extends TypedBaseAppState<Application> {
             }
             y++;
         }
+
+        //todo: automatically map action coordinates
+
         level = new Level(
                 txtLevelName.getText(),
                 (int) size.x + 1,
