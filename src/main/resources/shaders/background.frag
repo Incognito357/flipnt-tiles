@@ -7,8 +7,10 @@ uniform int m_Seed;
 uniform float m_Speed;
 uniform float m_Scale;
 uniform float m_Strength;
+uniform bool m_ScreenSpace;
 
 in vec4 gl_FragCoord;
+in vec4 worldPos;
 
 float fbm(in fnl_state _state, in fnl_state _state2, in vec2 _st, in float _t) {
     fnlDomainWarp3D(_state2, _st.x, _t, _st.y);
@@ -34,8 +36,10 @@ void main() {
     state2.lacunarity = 2.0f;
     state2.gain = .5f;
 
+    vec2 coord = m_ScreenSpace ? gl_FragCoord.xy : (worldPos.xy * 100.0f);
+
     //float noise = fnlGetNoise3D(state, gl_FragCoord.x, g_Time * 10.0, gl_FragCoord.y) / 2.f + 0.5f;
-    float f = fbm(state, state2, gl_FragCoord.xy, g_Time * m_Speed);
+    float f = fbm(state, state2, coord, g_Time * m_Speed);
     //gl_FragColor = vec4(noise, noise, noise, 1.0) * m_Color;
 
 //    vec2 st = gl_FragCoord.xy;

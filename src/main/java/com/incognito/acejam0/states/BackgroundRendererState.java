@@ -2,6 +2,7 @@ package com.incognito.acejam0.states;
 
 import com.incognito.acejam0.Application;
 import com.incognito.acejam0.utils.GlobalMaterials;
+import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
@@ -19,7 +20,9 @@ public class BackgroundRendererState extends TypedBaseAppState<Application> {
 
         AppSettings settings = app.getContext().getSettings();
         background = new Geometry("", new CenterQuad(settings.getWidth() / 2f, settings.getHeight() / 2f));
-        background.setMaterial(GlobalMaterials.getBackgroundMaterial(ColorRGBA.Blue));
+        Material mat = GlobalMaterials.getShaderMaterial(ColorRGBA.Blue);
+        mat.setBoolean("ScreenSpace", true);
+        background.setMaterial(mat);
         background.setLocalTranslation(0, 0, -10f);
 
         rootNode.attachChild(background);

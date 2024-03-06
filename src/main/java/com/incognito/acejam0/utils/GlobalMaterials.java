@@ -38,7 +38,7 @@ public class GlobalMaterials {
             mat.setColor("Color", colors.get(name));
             return mat;
         }
-        return getBackgroundMaterial(colors.get(name), FastMath.nextRandomFloat() * 5f + 5f, FastMath.nextRandomFloat() + 0.45f, 30f);
+        return getShaderMaterial(colors.get(name), FastMath.nextRandomFloat() * 5f + 5f, FastMath.nextRandomFloat() + 0.45f, 30f);
     }
 
     public static Material getDebugMaterial(ColorRGBA color) {
@@ -50,17 +50,18 @@ public class GlobalMaterials {
         });
     }
 
-    public static Material getBackgroundMaterial(ColorRGBA color, float speed, float scale, float strength) {
+    public static Material getShaderMaterial(ColorRGBA color, float speed, float scale, float strength) {
         Material mat = new Material(Application.APP.getAssetManager(), "shaders/background.j3md");
         mat.setColor("Color", color);
         mat.setInt("Seed", FastMath.nextRandomInt());
         mat.setFloat("Speed", speed);
         mat.setFloat("Scale", scale);
         mat.setFloat("Strength", strength);
+        mat.setBoolean("ScreenSpace", false);
         return mat;
     }
 
-    public static Material getBackgroundMaterial(ColorRGBA color) {
-        return getBackgroundMaterial(color, 7.5f, 1.0f, 30f);
+    public static Material getShaderMaterial(ColorRGBA color) {
+        return getShaderMaterial(color, 7.5f, 1.0f, 30f);
     }
 }

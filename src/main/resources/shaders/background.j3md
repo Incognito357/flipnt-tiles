@@ -5,6 +5,7 @@ MaterialDef background {
         Float Speed
         Float Scale
         Float Strength
+        Boolean ScreenSpace
     }
 
     Technique {
@@ -13,8 +14,7 @@ MaterialDef background {
 
         WorldParameters {
             WorldViewProjectionMatrix
-            ViewProjectionMatrix
-            ViewMatrix
+            WorldMatrix
             Time
         }
     }
