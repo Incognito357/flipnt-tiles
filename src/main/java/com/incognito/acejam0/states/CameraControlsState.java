@@ -2,9 +2,11 @@ package com.incognito.acejam0.states;
 
 import com.incognito.acejam0.Application;
 import com.jme3.input.InputManager;
+import com.jme3.input.KeyInput;
 import com.jme3.input.MouseInput;
 import com.jme3.input.controls.ActionListener;
 import com.jme3.input.controls.AnalogListener;
+import com.jme3.input.controls.KeyTrigger;
 import com.jme3.input.controls.MouseAxisTrigger;
 import com.jme3.input.controls.MouseButtonTrigger;
 import com.jme3.math.Vector2f;
@@ -21,24 +23,36 @@ public class CameraControlsState extends TypedBaseAppState<Application> {
     private InputManager inputManager;
     private float scale = 10f;
     private Vector4f frustum;
+    private final AnalogListener zoomIn = (name, value, tpf) -> zoom(-value);
+    private final AnalogListener zoomOut = (name, value, tpf) -> zoom(value);
     private boolean panning = false;
+    private boolean altPressed = false;
     private Vector2f cursor = Vector2f.ZERO.clone();
     private Vector3f camOrigin = Vector3f.ZERO.clone();
-
-    private final AnalogListener zoomIn = (name, value, tpf) -> zoom(-value);
-
-    private final AnalogListener zoomOut = (name, value, tpf) -> zoom(value);
-
     private final ActionListener panDrag = (name, isPressed, tpf) -> {
-        if (!panning && isPressed) {
+        boolean drag = false;
+        if ("panDrag".equals(name)) {
+            drag = true;
+        } else if ("panDragRightClickAlt".equals(name)) {
+            altPressed = isPressed;
+            logger.info("ALT: {}", altPressed);
+        } else if ("panDragRightClick".equals(name)) {
+            logger.info("Right click: {}", isPressed);
+            drag = isPressed && altPressed;
+        }
+        if (!panning && drag) {
             cursor = inputManager.getCursorPosition().clone();
             camOrigin = camera.getLocation().clone();
-        } else if (panning && !isPressed) {
+        } else if (panning && !drag) {
             cursor = Vector2f.ZERO.clone();
             camOrigin = Vector3f.ZERO.clone();
         }
-        panning = isPressed;
-        //inputManager.setCursorVisible(!panning);
+        panning = drag;
+
+        MapEditorState state = getApplication().getStateManager().getState(MapEditorState.class);
+        if (state != null) {
+            state.setEnabled(!panning);
+        }
     };
 
     private final AnalogListener pan = (name, value, tpf) -> {
@@ -75,11 +89,15 @@ public class CameraControlsState extends TypedBaseAppState<Application> {
                 new MouseAxisTrigger(MouseInput.AXIS_X, false),
                 new MouseAxisTrigger(MouseInput.AXIS_Y, true),
                 new MouseAxisTrigger(MouseInput.AXIS_Y, false));
+        inputManager.addMapping("panDragRightClick", new MouseButtonTrigger(MouseInput.BUTTON_RIGHT));
+        inputManager.addMapping("panDragRightClickAlt", new KeyTrigger(KeyInput.KEY_LMENU));
 
         inputManager.addListener(zoomIn, "zoomIn");
         inputManager.addListener(zoomOut, "zoomOut");
         inputManager.addListener(panDrag, "panDrag");
         inputManager.addListener(pan, "pan");
+        inputManager.addListener(panDrag, "panDragRightClick");
+        inputManager.addListener(panDrag, "panDragRightClickAlt");
 
         frustum = new Vector4f(camera.getFrustumLeft(), camera.getFrustumTop(), camera.getFrustumRight(), camera.getFrustumBottom());
 
