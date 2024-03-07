@@ -77,7 +77,8 @@ public class PlayerState extends TypedBaseAppState<Application> {
             Map<Vector2f, Boolean> tiles = players.stream()
                     .collect(Collectors.toMap(
                             Map.Entry::getValue,
-                            kvp -> level.isTileFlipped((int)kvp.getValue().x, (int)kvp.getValue().y)));
+                            kvp -> level.isTileFlipped((int)kvp.getValue().x, (int)kvp.getValue().y),
+                            (a, b) -> a));
 
             appStateManager.getState(MapRendererState.class).update(actions.get(state.getAndIncrement()));
 

@@ -1,8 +1,10 @@
 package com.incognito.acejam0.states;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.incognito.acejam0.Application;
 import com.incognito.acejam0.domain.Action;
 import com.incognito.acejam0.domain.ActionInfo;
+import com.incognito.acejam0.domain.InputBinding;
 import com.incognito.acejam0.domain.Level;
 import com.incognito.acejam0.domain.Tile;
 import com.incognito.acejam0.utils.GlobalMaterials;
@@ -23,12 +25,23 @@ import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.debug.WireBox;
 import com.jme3.system.AppSettings;
+import com.simsilica.lemur.Axis;
 import com.simsilica.lemur.Button;
 import com.simsilica.lemur.Container;
+import com.simsilica.lemur.FillMode;
 import com.simsilica.lemur.GuiGlobals;
 import com.simsilica.lemur.Label;
+import com.simsilica.lemur.ListBox;
+import com.simsilica.lemur.Panel;
+import com.simsilica.lemur.RollupPanel;
+import com.simsilica.lemur.SequenceModels;
+import com.simsilica.lemur.Spinner;
+import com.simsilica.lemur.TabbedPanel;
 import com.simsilica.lemur.TextField;
 import com.simsilica.lemur.component.SpringGridLayout;
+import com.simsilica.lemur.core.VersionedList;
+import com.simsilica.lemur.list.DefaultCellRenderer;
+import com.simsilica.lemur.value.DefaultValueRenderer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -40,6 +53,7 @@ import java.util.BitSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.IntStream;
 
 public class MapEditorState extends TypedBaseAppState<Application> {
@@ -54,12 +68,15 @@ public class MapEditorState extends TypedBaseAppState<Application> {
     private Level prePlayLevel;
     private Node rootNode;
     private Node guiNode;
+
     private Container gui;
     private TextField txtLevelName;
     private Label lblWidth;
     private Label lblHeight;
     private Label lblMouse;
     private Label lblTile;
+
+    private Container actionGui;
 
     private final Map<Vector2f, TileInfo> tiles = new HashMap<>();
     private Vector2f boundsMin = Vector2f.ZERO.clone();
@@ -113,7 +130,9 @@ public class MapEditorState extends TypedBaseAppState<Application> {
         gui.setLocalTranslation(10, settings.getHeight() - 10f, 0f);
         guiNode.attachChild(gui);
 
+        Container saveLoad = new Container(new SpringGridLayout(Axis.X, Axis.Y));
         txtLevelName = new TextField("");
+        txtLevelName.setPreferredWidth(150f);
         Button btnLoadLevel = new Button("Load");
         btnLoadLevel.addClickCommand(btn -> {
             if (txtLevelName.getText() != null && !txtLevelName.getText().isBlank()) {
@@ -127,9 +146,10 @@ public class MapEditorState extends TypedBaseAppState<Application> {
             }
         });
 
-        gui.addChild(txtLevelName);
-        gui.addChild(btnLoadLevel, 1);
-        gui.addChild(btnSaveLevel, 2);
+        saveLoad.addChild(txtLevelName);
+        saveLoad.addChild(btnLoadLevel);
+        saveLoad.addChild(btnSaveLevel);
+        gui.addChild(saveLoad);
 
         gui.addChild(new Label("Width"));
         lblWidth = new Label("");
@@ -183,6 +203,12 @@ public class MapEditorState extends TypedBaseAppState<Application> {
         });
         gui.addChild(btnFlip);
 
+        actionGui = new Container(new SpringGridLayout());
+        actionGui.setLocalTranslation(10, settings.getHeight() - 250f, 0f);
+        guiNode.attachChild(actionGui);
+
+        generateActionTabs();
+
         cursor.setMaterial(GlobalMaterials.getDebugMaterial(ColorRGBA.Yellow));
         bounds.setMaterial(GlobalMaterials.getDebugMaterial(new ColorRGBA(0, 0, 0.25f, 1)));
         rootNode.attachChild(cursor);
@@ -203,9 +229,79 @@ public class MapEditorState extends TypedBaseAppState<Application> {
         appStateManager.getState(MapRendererState.class).setEditing(true);
     }
 
+    private void generateActionTabs() {
+        TabbedPanel actionTabs = new TabbedPanel();
+        Arrays.stream(InputBinding.values())
+                .forEach(i -> actionTabs.addTab(i.name(), generateActionTab(i)));
+        actionTabs.setPreferredSize(new Vector3f(400, 500, 0f));
+        actionGui.addChild(actionTabs);
+    }
+
+    private Panel generateActionTab(InputBinding inputBinding) {
+        Container c = new Container(new SpringGridLayout(Axis.Y, Axis.X, FillMode.Last, FillMode.Even));
+        Container buttons = new Container(new SpringGridLayout(Axis.X, Axis.Y));
+        Button btnAdd = new Button("New");
+        buttons.addChild(btnAdd);
+        Button btnRemove = new Button("Delete");
+        buttons.addChild(btnRemove);
+        c.addChild(buttons);
+
+        List<Action> inputActions = level == null ? List.of() : level.getActions().getOrDefault(inputBinding.ordinal(), List.of());
+        ListBox<Action> listActions = new ListBox<>(
+                new VersionedList<>(inputActions),
+                new DefaultCellRenderer<>() {
+                    private final Map<Action, Panel> panels = new HashMap<>();
+                    @Override
+                    public Panel getView(Action value, boolean selected, Panel existing) {
+                        return panels.computeIfAbsent(value, v -> {
+                            Container c = new Container(new SpringGridLayout(Axis.Y, Axis.X, FillMode.Last, FillMode.Even));
+                            Container buttons = new Container(new SpringGridLayout(Axis.X, Axis.Y));
+                            Button btnAdd = new Button("Add");
+                            buttons.addChild(btnAdd);
+                            Button btnRemove = new Button("Remove");
+                            buttons.addChild(btnRemove);
+                            c.addChild(buttons);
+
+                            ListBox<ActionInfo> listActionInfo = new ListBox<>(
+                                    new VersionedList<>(v.getActions()),
+                                    new DefaultCellRenderer<>() {
+                                        private final Map<ActionInfo, Panel> panels = new HashMap<>();
+
+                                        @Override
+                                        public Panel getView(ActionInfo value, boolean selected, Panel existing) {
+                                            return panels.computeIfAbsent(value, v -> {
+                                                Container c = new Container(new SpringGridLayout(Axis.X, Axis.Y));
+                                                c.addChild(new Label("X"));
+                                                c.addChild(new TextField(String.valueOf(v.getX())));
+                                                c.addChild(new Label("Y"));
+                                                c.addChild(new TextField(String.valueOf(v.getY())));
+                                                c.addChild(new Spinner<>(
+                                                        new SequenceModels.ListSequence<>(List.of(-1, 0, 1, 2), v.getStateChange()),
+                                                        new DefaultValueRenderer<>(i -> switch(i) {
+                                                            case -1 -> "Down";
+                                                            case 0  -> "None";
+                                                            case 1  -> "Up";
+                                                            case 2  -> "Flip";
+                                                            default -> "???";
+                                                        })));
+                                                return c;
+                                            });
+                                        }
+                                    }, null);
+                            c.addChild(listActionInfo);
+                            return new RollupPanel("Move " + inputActions.indexOf(v), c, null);
+                        });
+                    }
+                }, null);
+        listActions.setVisibleItems(3);
+        c.addChild(listActions);
+        return c;
+    }
+
     @Override
     protected void onCleanup(Application app) {
         guiNode.detachChild(gui);
+        guiNode.detachChild(actionGui);
         rootNode.detachChild(cursor);
         rootNode.detachChild(bounds);
     }
@@ -235,8 +331,8 @@ public class MapEditorState extends TypedBaseAppState<Application> {
         mouseCell = new Vector2f(cursorX, -cursorY);
         mouseCell.x = FastMath.floor(mouseCell.x);
         mouseCell.y = FastMath.floor(mouseCell.y);
-        int cellX = (int)mouseCell.x;
-        int cellY = (int)mouseCell.y;
+        int cellX = (int) mouseCell.x;
+        int cellY = (int) mouseCell.y;
 
         if (level != null) {
             Tile t1 = level.getTile(cellX, cellY);
@@ -291,6 +387,9 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                     tiles.put(new Vector2f(x, y), new TileInfo(level.getTile(x, y), level.getTile2(x, y), level.isTileFlipped(x, y)));
                 }
             }
+
+            actionGui.clearChildren();
+            generateActionTabs();
         }
     }
 
