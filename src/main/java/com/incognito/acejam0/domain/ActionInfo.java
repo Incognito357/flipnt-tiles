@@ -4,8 +4,10 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
+import java.util.UUID;
 
 public class ActionInfo {
+    private final UUID uuid = UUID.randomUUID();
     private final int x;
     private final int y;
     private final int stateChange;  //2 to flip, -1 to force flip down, 1 to force flip up, 0 to keep original state
@@ -51,7 +53,8 @@ public class ActionInfo {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ActionInfo action = (ActionInfo) o;
-        return x == action.x &&
+        return Objects.equals(uuid, action.uuid) &&
+                x == action.x &&
                 y == action.y &&
                 stateChange == action.stateChange &&
                 tileChange == action.tileChange;
@@ -59,6 +62,6 @@ public class ActionInfo {
 
     @Override
     public int hashCode() {
-        return Objects.hash(x, y, stateChange, tileChange);
+        return Objects.hash(uuid, x, y, stateChange, tileChange);
     }
 }

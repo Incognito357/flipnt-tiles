@@ -319,12 +319,48 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                                             });
                                         }
                                     }, null);
+
+                            btnAdd.addClickCommand(btn -> {
+                                ActionInfo newAction = new ActionInfo(0, 0, 0, null);
+                                Integer selection = listActionInfo.getSelectionModel().getSelection();
+                                if (selection == null) {
+                                    listActionInfo.getModel().add(newAction);
+                                } else {
+                                    listActionInfo.getModel().add(selection + 1, newAction);
+                                }
+                            });
+
+                            btnRemove.addClickCommand(btn -> {
+                                Integer selection = listActionInfo.getSelectionModel().getSelection();
+                                if (selection != null) {
+                                    listActionInfo.getModel().remove(selection.intValue());
+                                }
+                            });
+
                             c.addChild(listActionInfo);
                             return new RollupPanel("Move " + inputActions.indexOf(v), c, null);
                         });
                     }
                 }, null);
         listActions.setVisibleItems(3);
+
+        btnAdd.addClickCommand(btn -> {
+            Action newAction = new Action(new ArrayList<>());
+            Integer selection = listActions.getSelectionModel().getSelection();
+            if (selection == null) {
+                listActions.getModel().add(newAction);
+            } else {
+                listActions.getModel().add(selection + 1, newAction);
+            }
+        });
+
+        btnRemove.addClickCommand(btn -> {
+            Integer selection = listActions.getSelectionModel().getSelection();
+            if (selection != null) {
+                listActions.getModel().remove(selection.intValue());
+            }
+        });
+
         c.addChild(listActions);
         return c;
     }
@@ -389,9 +425,19 @@ public class MapEditorState extends TypedBaseAppState<Application> {
             ActionInfoEditor editor = iterator.next();
             if (editor.isChanged()) {
                 List<Action> actions = level.getActions().get(editor.input.ordinal());
-                Action action = actions.get(actions.indexOf(editor.action));
+                int actionIndex = actions.indexOf(editor.action);
+                if (actionIndex == -1) {
+                    iterator.remove();
+                    continue;
+                }
+                Action action = actions.get(actionIndex);
                 ActionInfo newInfo = editor.getUpdatedInfo();
-                action.getActions().set(action.getActions().indexOf(editor.info), newInfo);
+                int actionInfoIndex = action.getActions().indexOf(editor.info);
+                if (actionInfoIndex == -1) {
+                    iterator.remove();
+                    continue;
+                }
+                action.getActions().set(actionInfoIndex, newInfo);
                 toAdd.add(new ActionInfoEditor(editor.input, action, newInfo, editor.x, editor.y, editor.state));
                 iterator.remove();
             }

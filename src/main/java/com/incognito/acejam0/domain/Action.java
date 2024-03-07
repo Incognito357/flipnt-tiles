@@ -31,7 +31,8 @@ public class Action {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Action action = (Action) o;
-        return Objects.equals(uuid, action.uuid) && Objects.equals(actions, action.actions);
+        return Objects.equals(uuid, action.uuid) &&
+                Objects.equals(actions, action.actions);
     }
 
     @Override
