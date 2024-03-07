@@ -186,9 +186,9 @@ public class Level {
             if (stateChange == 2) {
                 state.flip(i);
             } else if (stateChange == -1) {
-                state.clear(i);
-            } else if (stateChange == 1) {
                 state.set(i);
+            } else if (stateChange == 1) {
+                state.clear(i);
             }
         }
     }

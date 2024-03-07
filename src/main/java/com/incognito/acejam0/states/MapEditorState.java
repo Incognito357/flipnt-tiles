@@ -1,6 +1,5 @@
 package com.incognito.acejam0.states;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.incognito.acejam0.Application;
 import com.incognito.acejam0.domain.Action;
 import com.incognito.acejam0.domain.ActionInfo;
@@ -28,6 +27,7 @@ import com.jme3.system.AppSettings;
 import com.simsilica.lemur.Axis;
 import com.simsilica.lemur.Button;
 import com.simsilica.lemur.Container;
+import com.simsilica.lemur.DefaultRangedValueModel;
 import com.simsilica.lemur.FillMode;
 import com.simsilica.lemur.GuiGlobals;
 import com.simsilica.lemur.Label;
@@ -38,6 +38,8 @@ import com.simsilica.lemur.SequenceModels;
 import com.simsilica.lemur.Spinner;
 import com.simsilica.lemur.TabbedPanel;
 import com.simsilica.lemur.TextField;
+import com.simsilica.lemur.ValueEditors;
+import com.simsilica.lemur.ValueRenderers;
 import com.simsilica.lemur.component.SpringGridLayout;
 import com.simsilica.lemur.core.VersionedList;
 import com.simsilica.lemur.list.DefaultCellRenderer;
@@ -51,9 +53,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
+import java.util.Set;
 import java.util.stream.IntStream;
 
 public class MapEditorState extends TypedBaseAppState<Application> {
@@ -79,6 +83,7 @@ public class MapEditorState extends TypedBaseAppState<Application> {
     private Container actionGui;
 
     private final Map<Vector2f, TileInfo> tiles = new HashMap<>();
+    private final Set<ActionInfoEditor> editorActions = new HashSet<>();
     private Vector2f boundsMin = Vector2f.ZERO.clone();
     private Vector2f boundsMax = Vector2f.ZERO.clone();
     private Vector2f mouseCell = Vector2f.ZERO.clone();
@@ -95,7 +100,23 @@ public class MapEditorState extends TypedBaseAppState<Application> {
 
     private Vector2f camOffset = Vector2f.ZERO.clone();
 
-    private record TileInfo(Tile a, Tile b, boolean flipped) {
+    private record TileInfo(Tile a, Tile b, boolean flipped) {}
+    private record ActionInfoEditor(InputBinding input, Action action, ActionInfo info, Spinner<Double> x, Spinner<Double> y, Spinner<Integer> state, long xVersion, long yVersion, long stateVersion) {
+        ActionInfoEditor(InputBinding input, Action action, ActionInfo info, Spinner<Double> x, Spinner<Double> y, Spinner<Integer> state) {
+            this(input, action, info, x, y, state, x.getModel().getVersion(), y.getModel().getVersion(), state.getModel().getVersion());
+        }
+
+        private <T> boolean getChange(Spinner<T> spinner, long version) {
+            return spinner.getModel().getVersion() != version;
+        }
+
+        boolean isChanged() {
+            return getChange(x, xVersion) || getChange(y, yVersion) || getChange(state, stateVersion);
+        }
+
+        ActionInfo getUpdatedInfo() {
+            return new ActionInfo(x.getValue().intValue(), y.getValue().intValue(), state.getValue(), null);
+        }
     }
 
     private final ActionListener clickListener = (name, isPressed, tpf) -> {
@@ -252,8 +273,8 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                 new DefaultCellRenderer<>() {
                     private final Map<Action, Panel> panels = new HashMap<>();
                     @Override
-                    public Panel getView(Action value, boolean selected, Panel existing) {
-                        return panels.computeIfAbsent(value, v -> {
+                    public Panel getView(Action actionValue, boolean selected, Panel existing) {
+                        return panels.computeIfAbsent(actionValue, v -> {
                             Container c = new Container(new SpringGridLayout(Axis.Y, Axis.X, FillMode.Last, FillMode.Even));
                             Container buttons = new Container(new SpringGridLayout(Axis.X, Axis.Y));
                             Button btnAdd = new Button("Add");
@@ -268,22 +289,32 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                                         private final Map<ActionInfo, Panel> panels = new HashMap<>();
 
                                         @Override
-                                        public Panel getView(ActionInfo value, boolean selected, Panel existing) {
-                                            return panels.computeIfAbsent(value, v -> {
+                                        public Panel getView(ActionInfo actionInfoValue, boolean selected, Panel existing) {
+                                            return panels.computeIfAbsent(actionInfoValue, v -> {
                                                 Container c = new Container(new SpringGridLayout(Axis.X, Axis.Y));
-                                                c.addChild(new Label("X"));
-                                                c.addChild(new TextField(String.valueOf(v.getX())));
-                                                c.addChild(new Label("Y"));
-                                                c.addChild(new TextField(String.valueOf(v.getY())));
-                                                c.addChild(new Spinner<>(
+                                                Spinner<Double> numX = new Spinner<>(new SequenceModels.RangedSequence(
+                                                        new DefaultRangedValueModel(boundsMin.x, boundsMax.x, v.getX()), 1, 1),
+                                                        ValueRenderers.formattedRenderer("%.0f", "0"));
+                                                numX.setValueEditor(ValueEditors.doubleEditor("%.0f"));
+                                                Spinner<Double> numY = new Spinner<>(new SequenceModels.RangedSequence(
+                                                        new DefaultRangedValueModel(boundsMin.y, boundsMax.y, v.getY()), 1, 1),
+                                                        ValueRenderers.formattedRenderer("%.0f", "0"));
+                                                numY.setValueEditor(ValueEditors.doubleEditor("%.0f"));
+                                                Spinner<Integer> numState = new Spinner<>(
                                                         new SequenceModels.ListSequence<>(List.of(-1, 0, 1, 2), v.getStateChange()),
-                                                        new DefaultValueRenderer<>(i -> switch(i) {
+                                                        new DefaultValueRenderer<>(i -> switch (i) {
                                                             case -1 -> "Down";
-                                                            case 0  -> "None";
-                                                            case 1  -> "Up";
-                                                            case 2  -> "Flip";
+                                                            case 0 -> "None";
+                                                            case 1 -> "Up";
+                                                            case 2 -> "Flip";
                                                             default -> "???";
-                                                        })));
+                                                        }));
+                                                editorActions.add(new ActionInfoEditor(inputBinding, actionValue, actionInfoValue, numX, numY, numState));
+                                                c.addChild(new Label("X"));
+                                                c.addChild(numX);
+                                                c.addChild(new Label("Y"));
+                                                c.addChild(numY);
+                                                c.addChild(numState);
                                                 return c;
                                             });
                                         }
@@ -352,6 +383,20 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                 clickTile(true);
             }
         }
+
+        Set<ActionInfoEditor> toAdd = new HashSet<>();
+        for (Iterator<ActionInfoEditor> iterator = editorActions.iterator(); iterator.hasNext(); ) {
+            ActionInfoEditor editor = iterator.next();
+            if (editor.isChanged()) {
+                List<Action> actions = level.getActions().get(editor.input.ordinal());
+                Action action = actions.get(actions.indexOf(editor.action));
+                ActionInfo newInfo = editor.getUpdatedInfo();
+                action.getActions().set(action.getActions().indexOf(editor.info), newInfo);
+                toAdd.add(new ActionInfoEditor(editor.input, action, newInfo, editor.x, editor.y, editor.state));
+                iterator.remove();
+            }
+        }
+        editorActions.addAll(toAdd);
     }
 
     private void saveLevel(String name) {
