@@ -109,6 +109,22 @@ public class Level {
         return getTile(x, y, map2);
     }
 
+    @JsonIgnore
+    public Tile getActiveTile(int x, int y) {
+        if (isTileFlipped(x, y)) {
+            return getTile2(x, y);
+        }
+        return getTile(x, y);
+    }
+
+    @JsonIgnore
+    public Tile getInactiveTile(int x, int y) {
+        if (isTileFlipped(x, y)) {
+            return getTile(x, y);
+        }
+        return getTile2(x, y);
+    }
+
     private Tile getTile(int x, int y, List<Tile> data) {
         if (x < 0 || x >= width || y < 0 || y >= height) {
             return null;

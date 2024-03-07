@@ -20,6 +20,7 @@ import com.simsilica.lemur.anim.AbstractTween;
 import com.simsilica.lemur.anim.AnimationState;
 import com.simsilica.lemur.anim.SpatialTweens;
 import com.simsilica.lemur.anim.Tween;
+import com.simsilica.lemur.anim.TweenAnimation;
 import com.simsilica.lemur.anim.Tweens;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -37,6 +38,7 @@ public class MapRendererState extends TypedBaseAppState<Application> {
     private final Node tiles1 = new Node();
     private final Node tiles2 = new Node();
     private boolean editing = false;
+    private TweenAnimation currentTween;
 
     public MapRendererState(Level level) {
         this.level = level;
@@ -98,6 +100,10 @@ public class MapRendererState extends TypedBaseAppState<Application> {
     }
 
     public void update(Action action) {
+        if (currentTween != null && currentTween.isRunning()) {
+            currentTween.fastForwardPercent(1.0);
+            currentTween = null;
+        }
         List<Tween> tweens = new ArrayList<>();
         for (ActionInfo change : action.getActions()) {
             int x = change.getX();
@@ -154,11 +160,7 @@ public class MapRendererState extends TypedBaseAppState<Application> {
         level.performActions(action);
 
         logger.info("Adding {} tweens", tweens.size());
-        AnimationState.getDefaultInstance().add(Tweens.parallel(tweens.toArray(new Tween[0])));
-    }
-
-    public boolean isEditing() {
-        return editing;
+        currentTween = AnimationState.getDefaultInstance().add(Tweens.parallel(tweens.toArray(new Tween[0])));
     }
 
     public void setEditing(boolean editing) {

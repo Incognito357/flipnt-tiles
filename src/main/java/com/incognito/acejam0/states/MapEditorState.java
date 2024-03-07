@@ -226,17 +226,25 @@ public class MapEditorState extends TypedBaseAppState<Application> {
         Vector2f mousePos = inputManager.getCursorPosition();
         Vector3f mouseWorldPos = camera.getWorldCoordinates(new Vector2f(mousePos.x, mousePos.y), depth);
 
-        int x = (int) FastMath.floor(mouseWorldPos.x + 0.5f);
-        int y = (int) FastMath.floor(mouseWorldPos.y + 0.5f);
-        cursor.setLocalTranslation(x, y, 0.1f);
+        int cursorX = (int) FastMath.floor(mouseWorldPos.x + 0.5f);
+        int cursorY = (int) FastMath.floor(mouseWorldPos.y + 0.5f);
+        cursor.setLocalTranslation(cursorX, cursorY, 0.1f);
 
         Vector2f lastMouseCell = mouseCell.clone();
 
-        mouseCell = new Vector2f(x, -y);
+        mouseCell = new Vector2f(cursorX, -cursorY);
         mouseCell.x = FastMath.floor(mouseCell.x);
         mouseCell.y = FastMath.floor(mouseCell.y);
+        int cellX = (int)mouseCell.x;
+        int cellY = (int)mouseCell.y;
 
-        lblMouse.setText(String.format("cell: (%d, %d)", (int) mouseCell.x, (int) mouseCell.y));
+        if (level != null) {
+            Tile t1 = level.getTile(cellX, cellY);
+            Tile t2 = level.getTile2(cellX, cellY);
+            lblMouse.setText(String.format("cell: (%d, %d) %s %s", cellX, cellY, t1 != null ? t1 : "", t2 != null ? "(" + t2 + ")" : ""));
+        } else {
+            lblMouse.setText(String.format("cell: (%d, %d)", cellX, cellY));
+        }
 
         if ((firstLeftClicking || firstRightClicking) || ((leftClicking || rightClicking) && !lastMouseCell.equals(mouseCell))) {
             if (leftClicking) {
@@ -311,7 +319,6 @@ public class MapEditorState extends TypedBaseAppState<Application> {
         }
 
         //todo: automatically map action coordinates
-
         level = new Level(
                 txtLevelName.getText(),
                 (int) size.x + 1,
@@ -319,7 +326,7 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                 map1,
                 map2,
                 state,
-                Map.of());
+                level == null ? Map.of() : level.getActions());
         syncLevel(true);
     }
 
