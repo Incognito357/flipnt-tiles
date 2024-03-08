@@ -379,11 +379,6 @@ public class MapEditorState extends TypedBaseAppState<Application> {
     }
 
     @Override
-    protected void onDisable() {
-        GuiGlobals.getInstance().releaseCursorEnabled(gui);
-    }
-
-    @Override
     public void update(float tpf) {
         float depth = camera.getViewToProjectionZ(camera.getLocation().z);
         Vector2f mousePos = inputManager.getCursorPosition();
