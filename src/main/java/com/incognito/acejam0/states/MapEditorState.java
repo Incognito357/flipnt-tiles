@@ -334,6 +334,7 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                                                         ValueRenderers.formattedRenderer("%.0f", "0"));
                                                 numY.setValueEditor(ValueEditors.doubleEditor("%.0f"));
                                                 Checkbox chkRelative = new Checkbox("Relative");
+                                                chkRelative.setChecked(v.isRelative());
 
                                                 Spinner<Integer> numState = new Spinner<>(
                                                         new SequenceModels.ListSequence<>(List.of(-1, 0, 1, 2), v.getStateChange()),

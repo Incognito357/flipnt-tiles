@@ -80,7 +80,7 @@ public class MapRendererState extends TypedBaseAppState<Application> {
             g.setLocalTranslation(x, -y, 0);
 
             Geometry g2 = new Geometry("", new CenterQuad(1, 1));
-            g2.setMaterial(GlobalMaterials.getTileMaterial(!editing && tile == Tile.START ? Tile.FLOOR : tile2));
+            g2.setMaterial(GlobalMaterials.getTileMaterial(!editing && tile2 == Tile.START ? Tile.FLOOR : tile2));
             g2.setLocalTranslation(x, -y, 0);
 
             if (level.isTileFlipped(x, y)) {

@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -95,11 +96,11 @@ public class PlayerState extends TypedBaseAppState<Application> {
         AtomicInteger state = actionStates.computeIfAbsent(dir, d -> new AtomicInteger(0));
         List<Action> actions = level.getActions().getOrDefault(dir.ordinal(), List.of());
         if (!actions.isEmpty() && state.get() < actions.size() && state.get() >= 0) {
+            updateState(actions.get(state.getAndIncrement()));
+
             if (state.get() >= actions.size()) {
                 state.set(0);
             }
-
-            updateState(actions.get(state.getAndIncrement()));
         }
     }
 
@@ -109,6 +110,23 @@ public class PlayerState extends TypedBaseAppState<Application> {
                         Map.Entry::getValue,
                         kvp -> level.isTileFlipped((int) kvp.getValue().x, (int) kvp.getValue().y),
                         (a, b) -> a));
+
+
+        List<ActionInfo> relativeActions = action.getActions().stream()
+                .filter(ActionInfo::isRelative)
+                .flatMap(a -> {
+                    Vector2f offset = new Vector2f(a.getX(), a.getY());
+                    return tiles.keySet().stream()
+                            .distinct()
+                            .map(v -> v.add(offset))
+                            .map(v -> new ActionInfo((int)v.x, (int)v.y, false, a.getStateChange(), a.getTileChange()));
+                })
+                .toList();
+        if (!relativeActions.isEmpty()) {
+            ArrayList<ActionInfo> newActions = new ArrayList<>(action.getActions().stream().filter(Predicate.not(ActionInfo::isRelative)).toList());
+            newActions.addAll(relativeActions);
+            action = new Action(newActions);
+        }
 
         appStateManager.getState(MapRendererState.class).update(action);
 
