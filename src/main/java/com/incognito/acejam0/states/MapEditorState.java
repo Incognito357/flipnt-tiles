@@ -75,8 +75,6 @@ public class MapEditorState extends TypedBaseAppState<Application> {
 
     private Container gui;
     private TextField txtLevelName;
-    private Label lblWidth;
-    private Label lblHeight;
     private Label lblMouse;
     private Label lblTile;
 
@@ -166,19 +164,18 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                 saveLevel(txtLevelName.getText());
             }
         });
+        Button btnNewLevel = new Button("New");
+        btnNewLevel.addClickCommand(btn -> {
+            level = new Level("", 0, 0, List.of(), List.of(), new BitSet(), Map.of());
+            txtLevelName.setText("");
+            syncLevel(false);
+        });
 
         saveLoad.addChild(txtLevelName);
         saveLoad.addChild(btnLoadLevel);
         saveLoad.addChild(btnSaveLevel);
+        saveLoad.addChild(btnNewLevel);
         gui.addChild(saveLoad);
-
-        gui.addChild(new Label("Width"));
-        lblWidth = new Label("");
-        gui.addChild(lblWidth, 1);
-
-        gui.addChild(new Label("Height"));
-        lblHeight = new Label("");
-        gui.addChild(lblHeight, 1);
 
         lblMouse = new Label("");
         gui.addChild(lblMouse);
@@ -196,6 +193,9 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                 level = prePlayLevel;
                 syncLevel(true);
             } else {
+                if (level == null) {
+                    return;
+                }
                 btn.setText("Editor");
                 appStateManager.attach(new PlayerState(level));
                 GuiGlobals.getInstance().releaseFocus(guiNode);
@@ -470,8 +470,6 @@ public class MapEditorState extends TypedBaseAppState<Application> {
             boundsMax = new Vector2f(level.getWidth() - 1f, level.getHeight() - 1f);
             bounds.setMesh(new WireBox(level.getWidth() / 2f, level.getHeight() / 2f, 0f));
             bounds.setLocalTranslation(level.getWidth() / 2f - 0.5f, -level.getHeight() / 2f + 0.5f, 0.1f);
-            lblWidth.setText(String.valueOf(level.getWidth()));
-            lblHeight.setText(String.valueOf(level.getHeight()));
             tiles.clear();
             for (int y = 0; y < level.getHeight(); y++) {
                 for (int x = 0; x < level.getWidth(); x++) {

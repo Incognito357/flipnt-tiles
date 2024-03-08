@@ -60,8 +60,4 @@ public class GlobalMaterials {
         mat.setBoolean("ScreenSpace", false);
         return mat;
     }
-
-    public static Material getShaderMaterial(ColorRGBA color) {
-        return getShaderMaterial(color, 7.5f, 1.0f, 30f);
-    }
 }
