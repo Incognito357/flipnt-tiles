@@ -32,12 +32,10 @@ public class CameraControlsState extends TypedBaseAppState<Application> {
     private final ActionListener panDrag = (name, isPressed, tpf) -> {
         boolean drag = false;
         if ("panDrag".equals(name)) {
-            drag = true;
+            drag = isPressed;
         } else if ("panDragRightClickAlt".equals(name)) {
             altPressed = isPressed;
-            logger.info("ALT: {}", altPressed);
         } else if ("panDragRightClick".equals(name)) {
-            logger.info("Right click: {}", isPressed);
             drag = isPressed && altPressed;
         }
         if (!panning && drag) {
