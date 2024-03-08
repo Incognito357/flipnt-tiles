@@ -80,7 +80,7 @@ public class PlayerState extends TypedBaseAppState<Application> {
         if (isPressed) {
             skipTweens();
             List<ActionInfo> flips = IntStream.range(0, level.getMap().size())
-                    .mapToObj(i -> new ActionInfo(i % level.getWidth(), i / level.getWidth(), 2, null))
+                    .mapToObj(i -> new ActionInfo(i % level.getWidth(), i / level.getWidth(), false, 2, null))
                     .toList();
 
             updateState(new Action(flips));

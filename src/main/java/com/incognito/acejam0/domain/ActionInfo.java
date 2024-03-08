@@ -10,6 +10,7 @@ public class ActionInfo {
     private final UUID uuid = UUID.randomUUID();
     private final int x;
     private final int y;
+    private final boolean relative;
     private final int stateChange;  //2 to flip, -1 to force flip down, 1 to force flip up, 0 to keep original state
     private final Tile tileChange;  //ignores if null
 
@@ -17,10 +18,12 @@ public class ActionInfo {
     public ActionInfo(
             @JsonProperty("x") int x,
             @JsonProperty("y") int y,
+            @JsonProperty("relative") boolean relative,
             @JsonProperty("stateChange") int stateChange,
             @JsonProperty("tileChange") Tile tileChange) {
         this.x = x;
         this.y = y;
+        this.relative = relative;
         this.stateChange = stateChange;
         this.tileChange = tileChange;
     }
@@ -31,6 +34,10 @@ public class ActionInfo {
 
     public int getY() {
         return y;
+    }
+
+    public boolean isRelative() {
+        return relative;
     }
 
     /**
@@ -56,12 +63,13 @@ public class ActionInfo {
         return Objects.equals(uuid, action.uuid) &&
                 x == action.x &&
                 y == action.y &&
+                relative == action.relative &&
                 stateChange == action.stateChange &&
                 tileChange == action.tileChange;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(uuid, x, y, stateChange, tileChange);
+        return Objects.hash(uuid, x, y, relative, stateChange, tileChange);
     }
 }

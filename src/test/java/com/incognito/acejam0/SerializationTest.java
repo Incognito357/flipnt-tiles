@@ -45,8 +45,8 @@ class SerializationTest {
                 null,
                 new Builder<>(new BitSet(6)).with(BitSet::set, 3).with(BitSet::set, 12).build(),
                 new LinkedHashMap<>(Map.of(
-                        0, List.of(new Action(List.of(new ActionInfo(0, 1, -1, null)))),
-                        1, List.of(new Action(List.of(new ActionInfo(0, 1, 0, Tile.WALL), new ActionInfo(1, 0, 1, Tile.START))))
+                        0, List.of(new Action(List.of(new ActionInfo(0, 1, false, -1, null)))),
+                        1, List.of(new Action(List.of(new ActionInfo(0, 1, true, 0, Tile.WALL), new ActionInfo(1, 0, false, 1, Tile.START))))
                 )));
         String s = Mapper.getMapper().writeValueAsString(level);
         assertEquals("{" +
@@ -61,6 +61,7 @@ class SerializationTest {
                         "\"actions\":[{" +
                             "\"x\":0," +
                             "\"y\":1," +
+                            "\"relative\":false," +
                             "\"stateChange\":-1," +
                             "\"tileChange\":null" +
                         "}]" +
@@ -69,11 +70,13 @@ class SerializationTest {
                         "\"actions\":[{" +
                             "\"x\":0," +
                             "\"y\":1," +
+                            "\"relative\":true," +
                             "\"stateChange\":0," +
                             "\"tileChange\":1" +
                         "},{" +
                             "\"x\":1," +
                             "\"y\":0," +
+                            "\"relative\":false," +
                             "\"stateChange\":1," +
                             "\"tileChange\":3" +
                         "}]" +

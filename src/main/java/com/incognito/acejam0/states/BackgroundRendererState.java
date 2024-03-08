@@ -43,9 +43,9 @@ public class BackgroundRendererState extends TypedBaseAppState<Application> {
     public Tween createTween(ColorRGBA target, float length) {
         Material mat = background.getMaterial();
         ColorRGBA origin = mat.getParamValue("Color");
-        float originSpeed = mat.getParamValue("Speed");
+        //float originSpeed = mat.getParamValue("Speed");
         float originStrength = mat.getParamValue("Strength");
-        float targetSpeed = originSpeed > speed ? speed : originSpeed * 1.5f;
+        //float targetSpeed = originSpeed > speed ? speed : originSpeed * 1.5f;
         float targetStrength = originStrength > strength ? strength : originStrength * 3f;
         return new AbstractTween(length) {
 
@@ -53,7 +53,7 @@ public class BackgroundRendererState extends TypedBaseAppState<Application> {
             protected void doInterpolate(double t) {
                 if (t == 1) {
                     mat.setColor("Color", target);
-                    mat.setFloat("Speed", targetSpeed);
+                    //mat.setFloat("Speed", targetSpeed);
                     mat.setFloat("Strength", targetStrength);
                     return;
                 }
@@ -61,8 +61,8 @@ public class BackgroundRendererState extends TypedBaseAppState<Application> {
                 mixed.interpolateLocal(origin, target, (float)t);
                 mat.setColor("Color", mixed);
 
-                float speedInt = FastMath.interpolateLinear((float)t, originSpeed, targetSpeed);
-                mat.setFloat("Speed", speedInt);
+//                float speedInt = FastMath.interpolateLinear((float)t, originSpeed, targetSpeed);
+//                mat.setFloat("Speed", speedInt);
 
                 float strengthInt = FastMath.interpolateLinear((float)t, originStrength, targetStrength);
                 mat.setFloat("Strength", strengthInt);

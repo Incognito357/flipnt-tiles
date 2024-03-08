@@ -26,6 +26,7 @@ import com.jme3.scene.debug.WireBox;
 import com.jme3.system.AppSettings;
 import com.simsilica.lemur.Axis;
 import com.simsilica.lemur.Button;
+import com.simsilica.lemur.Checkbox;
 import com.simsilica.lemur.Container;
 import com.simsilica.lemur.DefaultRangedValueModel;
 import com.simsilica.lemur.FillMode;
@@ -99,9 +100,38 @@ public class MapEditorState extends TypedBaseAppState<Application> {
     private Vector2f camOffset = Vector2f.ZERO.clone();
 
     private record TileInfo(Tile a, Tile b, boolean flipped) {}
-    private record ActionInfoEditor(InputBinding input, Action action, ActionInfo info, Spinner<Double> x, Spinner<Double> y, Spinner<Integer> state, long xVersion, long yVersion, long stateVersion) {
-        ActionInfoEditor(InputBinding input, Action action, ActionInfo info, Spinner<Double> x, Spinner<Double> y, Spinner<Integer> state) {
-            this(input, action, info, x, y, state, x.getModel().getVersion(), y.getModel().getVersion(), state.getModel().getVersion());
+    private record ActionInfoEditor(
+            InputBinding input,
+            Action action,
+            ActionInfo info,
+            Spinner<Double> x,
+            Spinner<Double> y,
+            Checkbox relative,
+            Spinner<Integer> state,
+            long xVersion,
+            long yVersion,
+            long relativeVersion,
+            long stateVersion
+    ) {
+        ActionInfoEditor(
+                InputBinding input,
+                Action action,
+                ActionInfo info,
+                Spinner<Double> x,
+                Spinner<Double> y,
+                Checkbox relative,
+                Spinner<Integer> state) {
+            this(input,
+                    action,
+                    info,
+                    x,
+                    y,
+                    relative,
+                    state,
+                    x.getModel().getVersion(),
+                    y.getModel().getVersion(),
+                    relative.getModel().getVersion(),
+                    state.getModel().getVersion());
         }
 
         private <T> boolean getChange(Spinner<T> spinner, long version) {
@@ -109,11 +139,14 @@ public class MapEditorState extends TypedBaseAppState<Application> {
         }
 
         boolean isChanged() {
-            return getChange(x, xVersion) || getChange(y, yVersion) || getChange(state, stateVersion);
+            return getChange(x, xVersion) ||
+                    getChange(y, yVersion) ||
+                    getChange(state, stateVersion) ||
+                    relative.getModel().getVersion() != relativeVersion;
         }
 
         ActionInfo getUpdatedInfo() {
-            return new ActionInfo(x.getValue().intValue(), y.getValue().intValue(), state.getValue(), null);
+            return new ActionInfo(x.getValue().intValue(), y.getValue().intValue(), relative.isChecked(), state.getValue(), null);
         }
     }
 
@@ -218,7 +251,7 @@ public class MapEditorState extends TypedBaseAppState<Application> {
 
         btnFlip.addClickCommand(btn -> {
             List<ActionInfo> flips = IntStream.range(0, level.getMap().size())
-                    .mapToObj(i -> new ActionInfo(i % level.getWidth(), i / level.getWidth(), 2, null))
+                    .mapToObj(i -> new ActionInfo(i % level.getWidth(), i / level.getWidth(), false, 2, null))
                     .toList();
             appStateManager.getState(MapRendererState.class).update(new Action(flips));
         });
@@ -300,6 +333,8 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                                                         new DefaultRangedValueModel(boundsMin.y, boundsMax.y, v.getY()), 1, 1),
                                                         ValueRenderers.formattedRenderer("%.0f", "0"));
                                                 numY.setValueEditor(ValueEditors.doubleEditor("%.0f"));
+                                                Checkbox chkRelative = new Checkbox("Relative");
+
                                                 Spinner<Integer> numState = new Spinner<>(
                                                         new SequenceModels.ListSequence<>(List.of(-1, 0, 1, 2), v.getStateChange()),
                                                         new DefaultValueRenderer<>(i -> switch (i) {
@@ -309,11 +344,19 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                                                             case 2 -> "Flip";
                                                             default -> "???";
                                                         }));
-                                                editorActions.add(new ActionInfoEditor(inputBinding, actionValue, actionInfoValue, numX, numY, numState));
+                                                editorActions.add(new ActionInfoEditor(
+                                                        inputBinding,
+                                                        actionValue,
+                                                        actionInfoValue,
+                                                        numX,
+                                                        numY,
+                                                        chkRelative,
+                                                        numState));
                                                 c.addChild(new Label("X"));
                                                 c.addChild(numX);
                                                 c.addChild(new Label("Y"));
                                                 c.addChild(numY);
+                                                c.addChild(chkRelative);
                                                 c.addChild(numState);
                                                 return c;
                                             });
@@ -321,7 +364,7 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                                     }, null);
 
                             btnAdd.addClickCommand(btn -> {
-                                ActionInfo newAction = new ActionInfo(0, 0, 0, null);
+                                ActionInfo newAction = new ActionInfo(0, 0, false, 0, null);
                                 Integer selection = listActionInfo.getSelectionModel().getSelection();
                                 if (selection == null) {
                                     listActionInfo.getModel().add(newAction);
@@ -433,7 +476,7 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                     continue;
                 }
                 action.getActions().set(actionInfoIndex, newInfo);
-                toAdd.add(new ActionInfoEditor(editor.input, action, newInfo, editor.x, editor.y, editor.state));
+                toAdd.add(new ActionInfoEditor(editor.input, action, newInfo, editor.x, editor.y, editor.relative, editor.state));
                 iterator.remove();
             }
         }
