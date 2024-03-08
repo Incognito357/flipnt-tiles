@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -19,7 +20,7 @@ import java.util.UUID;
 import java.util.stream.IntStream;
 
 public class Level {
-    private static final int MAX_SIZE = 100;
+    public static final int MAX_SIZE = 100;
     private static final Logger logger = LogManager.getLogger();
 
     private final String title;
@@ -39,8 +40,6 @@ public class Level {
             @JsonProperty("map2") List<Tile> map2,
             @JsonProperty("state") BitSet state,
             @JsonProperty("actions") Map<Integer, List<Action>> actions) {
-        this.actions = actions;
-
         if (title == null || title.isBlank()) {
             title = UUID.randomUUID().toString();
         }
@@ -97,6 +96,19 @@ public class Level {
         }
 
         this.state = Objects.requireNonNullElseGet(state, () -> new BitSet(size));
+
+        if (actions == null) {
+            actions = new HashMap<>();
+            for (InputBinding b : InputBinding.values()) {
+                actions.put(b.ordinal(), new ArrayList<>());
+            }
+            this.actions = actions;
+        } else {
+            this.actions = new HashMap<>(actions);
+            for (InputBinding b : InputBinding.values()) {
+                this.actions.computeIfAbsent(b.ordinal(), i -> new ArrayList<>());
+            }
+        }
     }
 
     @JsonIgnore

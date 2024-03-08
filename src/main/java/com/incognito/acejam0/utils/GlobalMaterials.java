@@ -20,15 +20,10 @@ public class GlobalMaterials {
             Tile.WALL.name(), ColorRGBA.fromRGBA255(16, 16, 16, 255),
             Tile.FLOOR.name(), ColorRGBA.fromRGBA255(239, 239, 239, 255),
             Tile.START.name(), ColorRGBA.Cyan,
-            Tile.EXIT.name(), ColorRGBA.Green,
-            "PLAYER", ColorRGBA.Cyan);
+            Tile.EXIT.name(), ColorRGBA.Green);
 
     public static Material getTileMaterial(Tile tile) {
         return mats.computeIfAbsent(tile.name(), GlobalMaterials::createMaterial);
-    }
-
-    public static Material getPlayerMaterial() {
-        return mats.computeIfAbsent("PLAYER", GlobalMaterials::createMaterial);
     }
 
     private static Material createMaterial(String name) {

@@ -57,23 +57,35 @@ public class PlayerState extends TypedBaseAppState<Application> {
 
     private final Map<InputBinding, ActionListener> listeners = Map.of(
             InputBinding.UP, (name, isPressed, tpf) -> {
-                if (isPressed && (move(0, -1))) {
-                    doAction(InputBinding.UP);
+                if (isPressed) {
+                    Set<Vector2f> moved = move(0, -1);
+                    if (!moved.isEmpty()) {
+                        doAction(InputBinding.UP, moved);
+                    }
                 }
             },
             InputBinding.DOWN, (name, isPressed, tpf) -> {
-                if (isPressed && move(0, 1)) {
-                    doAction(InputBinding.DOWN);
+                if (isPressed) {
+                    Set<Vector2f> moved = move(0, 1);
+                    if (!moved.isEmpty()) {
+                        doAction(InputBinding.DOWN, moved);
+                    }
                 }
             },
             InputBinding.LEFT, (name, isPressed, tpf) -> {
-                if (isPressed && move(-1, 0)) {
-                    doAction(InputBinding.LEFT);
+                if (isPressed) {
+                    Set<Vector2f> moved = move(-1, 0);
+                    if (!moved.isEmpty()) {
+                        doAction(InputBinding.LEFT, moved);
+                    }
                 }
             },
             InputBinding.RIGHT, (name, isPressed, tpf) -> {
-                if (isPressed && move(1, 0)) {
-                    doAction(InputBinding.RIGHT);
+                if (isPressed) {
+                    Set<Vector2f> moved = move(1, 0);
+                    if (!moved.isEmpty()) {
+                        doAction(InputBinding.RIGHT, moved);
+                    }
                 }
             });
 
@@ -84,7 +96,7 @@ public class PlayerState extends TypedBaseAppState<Application> {
                     .mapToObj(i -> new ActionInfo(i % level.getWidth(), i / level.getWidth(), false, 2, null))
                     .toList();
 
-            updateState(new Action(flips));
+            updateState(new Action(flips), Set.of());
 
             Tween bgTween = appStateManager.getState(BackgroundRendererState.class).createTween(isFlipped ? ColorRGBA.Blue : ColorRGBA.Red.mult(0.5f), 0.75f);
             currentTweens.add(AnimationState.getDefaultInstance().add(bgTween));
@@ -92,11 +104,11 @@ public class PlayerState extends TypedBaseAppState<Application> {
         }
     };
 
-    private void doAction(InputBinding dir) {
+    private void doAction(InputBinding dir, Set<Vector2f> moved) {
         AtomicInteger state = actionStates.computeIfAbsent(dir, d -> new AtomicInteger(0));
         List<Action> actions = level.getActions().getOrDefault(dir.ordinal(), List.of());
         if (!actions.isEmpty() && state.get() < actions.size() && state.get() >= 0) {
-            updateState(actions.get(state.getAndIncrement()));
+            updateState(actions.get(state.getAndIncrement()), moved);
 
             if (state.get() >= actions.size()) {
                 state.set(0);
@@ -104,19 +116,18 @@ public class PlayerState extends TypedBaseAppState<Application> {
         }
     }
 
-    private void updateState(Action action) {
+    private void updateState(Action action, Set<Vector2f> moved) {
         Map<Vector2f, Boolean> tiles = players.stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getValue,
                         kvp -> level.isTileFlipped((int) kvp.getValue().x, (int) kvp.getValue().y),
                         (a, b) -> a));
 
-
         List<ActionInfo> relativeActions = action.getActions().stream()
                 .filter(ActionInfo::isRelative)
                 .flatMap(a -> {
                     Vector2f offset = new Vector2f(a.getX(), a.getY());
-                    return tiles.keySet().stream()
+                    return moved.stream()
                             .distinct()
                             .map(v -> v.add(offset))
                             .map(v -> new ActionInfo((int)v.x, (int)v.y, false, a.getStateChange(), a.getTileChange()));
@@ -144,8 +155,8 @@ public class PlayerState extends TypedBaseAppState<Application> {
         currentTweens.add(AnimationState.getDefaultInstance().add(Tweens.parallel(tweens.toArray(new Tween[0]))));
     }
 
-    private boolean move(int dx, int dy) {
-        boolean moved = false;
+    private Set<Vector2f> move(int dx, int dy) {
+        Set<Vector2f> moved = new HashSet<>();
         for (Map.Entry<Spatial, Vector2f> kvp : players) {
             Vector2f p = kvp.getValue();
             int x = (int) p.x;
@@ -168,7 +179,7 @@ public class PlayerState extends TypedBaseAppState<Application> {
             p.x = nx;
             p.y = ny;
             kvp.getKey().setLocalTranslation(kvp.getKey().getLocalTranslation().add(dx, -dy, 0));
-            moved = true;
+            moved.add(p);
         }
         return moved;
     }
@@ -193,17 +204,13 @@ public class PlayerState extends TypedBaseAppState<Application> {
         appStateManager = app.getStateManager();
 
         List<Tile> map = level.getMap();
+        List<Tile> map2 = level.getMap2();
         for (int i = 0; i < map.size(); i++) {
             if (map.get(i) == Tile.START) {
-                int x = i % level.getWidth();
-                int y = i / level.getWidth();
-                logger.info("Creating player at {}, {}", x, y);
-                Geometry g = new Geometry(String.format("player-x:%d,y:%d", x, y), new Sphere(16, 2, 0.4f));
-                g.setMaterial(GlobalMaterials.getPlayerMaterial());
-                g.rotate(FastMath.HALF_PI, 0, 0);
-                g.setLocalTranslation(x, -y, 1);
-                players.add(Map.entry(g, new Vector2f(x, y)));
-                playersNode.attachChild(g);
+                createPlayer(i, false);
+            }
+            if (map2.get(i) == Tile.START) {
+                createPlayer(i, true);
             }
         }
 
@@ -232,6 +239,22 @@ public class PlayerState extends TypedBaseAppState<Application> {
         addListener(inputManager, InputBinding.LEFT);
         addListener(inputManager, InputBinding.RIGHT);
         inputManager.addListener(flipListener, "flip");
+    }
+
+    private void createPlayer(int i, boolean flipped) {
+        int x = i % level.getWidth();
+        int y = i / level.getWidth();
+        logger.info("Creating player at {}, {} ({})", x, y, flipped ? "back" : "front");
+        Geometry g = new Geometry("", new Sphere(16, 2, 0.4f));
+        g.setMaterial(GlobalMaterials.getShaderMaterial(
+                flipped ? ColorRGBA.Magenta : ColorRGBA.Cyan,
+                FastMath.nextRandomFloat() * 5f + 5f,
+                FastMath.nextRandomFloat() + 0.45f,
+                FastMath.nextRandomFloat() * 30f + 25f));
+        g.rotate(FastMath.HALF_PI, 0, 0);
+        g.setLocalTranslation(x, -y, flipped ? -1 : 1);
+        players.add(Map.entry(g, new Vector2f(x, y)));
+        playersNode.attachChild(g);
     }
 
     private void addListener(InputManager inputManager, InputBinding mapping) {

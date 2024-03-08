@@ -300,9 +300,9 @@ public class MapEditorState extends TypedBaseAppState<Application> {
         buttons.addChild(btnRemove);
         c.addChild(buttons);
 
-        List<Action> inputActions = level == null ? List.of() : level.getActions().getOrDefault(inputBinding.ordinal(), List.of());
+        List<Action> inputActions = level == null ? List.of() : level.getActions().get(inputBinding.ordinal());
         ListBox<Action> listActions = new ListBox<>(
-                new VersionedList<>(inputActions),
+                VersionedList.wrap(inputActions),
                 new DefaultCellRenderer<>() {
                     private final Map<Action, Panel> panels = new HashMap<>();
                     @Override
@@ -317,7 +317,7 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                             c.addChild(buttons);
 
                             ListBox<ActionInfo> listActionInfo = new ListBox<>(
-                                    new VersionedList<>(v.getActions()),
+                                    VersionedList.wrap(v.getActions()),
                                     new DefaultCellRenderer<>() {
                                         private final Map<ActionInfo, Panel> panels = new HashMap<>();
 
@@ -326,11 +326,11 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                                             return panels.computeIfAbsent(actionInfoValue, v -> {
                                                 Container c = new Container(new SpringGridLayout(Axis.X, Axis.Y));
                                                 Spinner<Double> numX = new Spinner<>(new SequenceModels.RangedSequence(
-                                                        new DefaultRangedValueModel(boundsMin.x, boundsMax.x, v.getX()), 1, 1),
+                                                        new DefaultRangedValueModel(-Level.MAX_SIZE, Level.MAX_SIZE, v.getX()), 1, 1),
                                                         ValueRenderers.formattedRenderer("%.0f", "0"));
                                                 numX.setValueEditor(ValueEditors.doubleEditor("%.0f"));
                                                 Spinner<Double> numY = new Spinner<>(new SequenceModels.RangedSequence(
-                                                        new DefaultRangedValueModel(boundsMin.y, boundsMax.y, v.getY()), 1, 1),
+                                                        new DefaultRangedValueModel(-Level.MAX_SIZE, Level.MAX_SIZE, v.getY()), 1, 1),
                                                         ValueRenderers.formattedRenderer("%.0f", "0"));
                                                 numY.setValueEditor(ValueEditors.doubleEditor("%.0f"));
                                                 Checkbox chkRelative = new Checkbox("Relative");
