@@ -17,7 +17,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class Level {
     public static final int MAX_SIZE = 100;
@@ -30,6 +33,8 @@ public class Level {
     private final List<Tile> map2;
     private final BitSet state;
     private final Map<Integer, List<Action>> actions;
+    private final int numStarts;
+    private final int numExits;
 
     @JsonCreator
     public Level(
@@ -109,6 +114,12 @@ public class Level {
                 this.actions.computeIfAbsent(b.ordinal(), i -> new ArrayList<>());
             }
         }
+
+        Map<Tile, Long> counts = Stream.concat(this.map.stream(), this.map2.stream())
+                .filter(t -> t == Tile.START || t == Tile.EXIT)
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+        this.numStarts = counts.getOrDefault(Tile.START, 0L).intValue();
+        this.numExits = counts.getOrDefault(Tile.EXIT, 0L).intValue();
     }
 
     @JsonIgnore
@@ -179,6 +190,16 @@ public class Level {
 
     public Map<Integer, List<Action>> getActions() {
         return actions;
+    }
+
+    @JsonIgnore
+    public int getNumStarts() {
+        return numStarts;
+    }
+
+    @JsonIgnore
+    public int getNumExits() {
+        return numExits;
     }
 
     public void performActions(Action change) {

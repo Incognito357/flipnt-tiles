@@ -6,6 +6,7 @@ import com.incognito.acejam0.domain.ActionInfo;
 import com.incognito.acejam0.domain.InputBinding;
 import com.incognito.acejam0.domain.Level;
 import com.incognito.acejam0.domain.Tile;
+import com.incognito.acejam0.states.BackgroundRendererState.BgState;
 import com.incognito.acejam0.utils.GlobalMaterials;
 import com.jme3.app.state.AppStateManager;
 import com.jme3.input.InputManager;
@@ -43,18 +44,15 @@ import java.util.stream.IntStream;
 public class PlayerState extends TypedBaseAppState<Application> {
 
     private static final Logger logger = LogManager.getLogger();
-
-    private Level level;
-    private Node rootNode;
     private final Node playersNode = new Node();
     private final List<Map.Entry<Spatial, Vector2f>> players = new ArrayList<>();
     private final Map<InputBinding, AtomicInteger> actionStates = new HashMap<>();
     private final Set<TweenAnimation> currentTweens = new HashSet<>();
-
+    boolean isFlipped = false;
+    private Level level;
+    private Node rootNode;
     private InputManager inputManager;
     private AppStateManager appStateManager;
-    boolean isFlipped = false;
-
     private final Map<InputBinding, ActionListener> listeners = Map.of(
             InputBinding.UP, (name, isPressed, tpf) -> {
                 if (isPressed) {
@@ -98,11 +96,15 @@ public class PlayerState extends TypedBaseAppState<Application> {
 
             updateState(new Action(flips), Set.of());
 
-            Tween bgTween = appStateManager.getState(BackgroundRendererState.class).createTween(isFlipped ? ColorRGBA.Blue : ColorRGBA.Red.mult(0.5f), 0.75f);
-            currentTweens.add(AnimationState.getDefaultInstance().add(bgTween));
+            appStateManager.getState(BackgroundRendererState.class)
+                    .setBackgroundState(isFlipped ? BgState.FRONT : BgState.BACK, 0.75f);
             isFlipped = !isFlipped;
         }
     };
+
+    public PlayerState(Level level) {
+        this.level = level;
+    }
 
     private void doAction(InputBinding dir, Set<Vector2f> moved) {
         AtomicInteger state = actionStates.computeIfAbsent(dir, d -> new AtomicInteger(0));
@@ -114,6 +116,62 @@ public class PlayerState extends TypedBaseAppState<Application> {
                 state.set(0);
             }
         }
+
+        if (checkFinish()) {
+            appStateManager.getState(BackgroundRendererState.class)
+                    .setBackgroundState(BgState.COMPLETE, 1.5f);
+        }
+    }
+
+    private boolean checkFinish() {
+        // every player must be on an exit
+        if (players.stream()
+                .anyMatch(kvp -> (kvp.getKey().getLocalTranslation().z < 0 ?
+                        level.getInactiveTile((int) kvp.getValue().x, (int) kvp.getValue().y) :
+                        level.getActiveTile((int) kvp.getValue().x, (int) kvp.getValue().y)) != Tile.EXIT)) {
+            return false;
+        }
+
+        // if more players than exits, some exits will need more than one player, but spread evenly
+        // to prevent piling all players onto a single exit
+        int maxPlayerPerExit = (int)FastMath.ceil(level.getNumStarts() / (float)level.getNumExits());
+
+        // if more exits than players, some exits will be empty, so stop checking early once all
+        // players are accounted for
+        int total = 0;
+        List<Tile> map = level.getMap();
+        List<Tile> map2 = level.getMap2();
+        for (int i = 0; i < map.size(); i++) {
+            int x = i % level.getWidth();
+            int y = i / level.getWidth();
+            if (map.get(i) == Tile.EXIT) {
+                long count = players.stream()
+                        .filter(kvp -> kvp.getKey().getLocalTranslation().z > 0)
+                        .filter(kvp -> (int) kvp.getValue().x == x && (int) kvp.getValue().getY() == y)
+                        .count();
+                if (count > maxPlayerPerExit) {
+                    return false;
+                }
+                total += count;
+                if (total == level.getNumStarts()) {
+                    return true;
+                }
+            }
+            if (map2.get(i) == Tile.EXIT) {
+                long count = players.stream()
+                        .filter(kvp -> kvp.getKey().getLocalTranslation().z < 0)
+                        .filter(kvp -> (int) kvp.getValue().x == x && (int) kvp.getValue().getY() == y)
+                        .count();
+                if (count > maxPlayerPerExit) {
+                    return false;
+                }
+                total += count;
+                if (total == level.getNumStarts()) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private void updateState(Action action, Set<Vector2f> moved) {
@@ -191,10 +249,6 @@ public class PlayerState extends TypedBaseAppState<Application> {
         currentTweens.clear();
     }
 
-    public PlayerState(Level level) {
-        this.level = level;
-    }
-
     @Override
     protected void onInitialize(Application app) {
         rootNode = app.getRootNode();
@@ -237,6 +291,8 @@ public class PlayerState extends TypedBaseAppState<Application> {
         addListener(inputManager, InputBinding.LEFT);
         addListener(inputManager, InputBinding.RIGHT);
         inputManager.addListener(flipListener, "flip");
+
+        appStateManager.getState(BackgroundRendererState.class).setBackgroundState(BgState.FRONT, 0.5f);
     }
 
     private void createPlayer(int i, boolean flipped) {

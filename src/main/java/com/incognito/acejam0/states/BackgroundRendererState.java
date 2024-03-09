@@ -10,16 +10,37 @@ import com.jme3.scene.Node;
 import com.jme3.scene.shape.CenterQuad;
 import com.jme3.system.AppSettings;
 import com.simsilica.lemur.anim.AbstractTween;
-import com.simsilica.lemur.anim.Tween;
+import com.simsilica.lemur.anim.AnimationState;
+import com.simsilica.lemur.anim.TweenAnimation;
 
 public class BackgroundRendererState extends TypedBaseAppState<Application> {
 
     private Node rootNode;
     private Geometry background;
+    private TweenAnimation currentTween;
 
     private static final float speed = 7.5f;
     private static final float scale = 1.0f;
     private static final float strength = 30f;
+
+    public static enum BgState {
+        FRONT(7.5f, 1.0f, 1.0f, ColorRGBA.Blue),
+        BACK(7.5f, 1.0f, 90.0f, ColorRGBA.Red.mult(0.5f)),
+        COMPLETE(10.0f, 1.5f, 90.0f, ColorRGBA.Green),
+        EDITOR(7.5f, 1.0f, 1.0f, ColorRGBA.Orange);
+
+        final float speed;
+        final float scale;
+        final float strength;
+        final ColorRGBA color;
+
+        BgState(float speed, float scale, float strength, ColorRGBA color) {
+            this.speed = speed;
+            this.scale = scale;
+            this.strength = strength;
+            this.color = color;
+        }
+    }
 
     @Override
     protected void onInitialize(Application app) {
@@ -40,33 +61,38 @@ public class BackgroundRendererState extends TypedBaseAppState<Application> {
         rootNode.detachChild(background);
     }
 
-    public Tween createTween(ColorRGBA target, float length) {
+    public void setBackgroundState(BgState target, float length) {
+        if (currentTween != null) {
+            currentTween.fastForwardPercent(1.0);
+        }
         Material mat = background.getMaterial();
         ColorRGBA origin = mat.getParamValue("Color");
-        //float originSpeed = mat.getParamValue("Speed");
+        float originSpeed = mat.getParamValue("Speed");
+        float originScale = mat.getParamValue("Scale");
         float originStrength = mat.getParamValue("Strength");
-        //float targetSpeed = originSpeed > speed ? speed : originSpeed * 1.5f;
-        float targetStrength = originStrength > strength ? strength : originStrength * 3f;
-        return new AbstractTween(length) {
+        currentTween = AnimationState.getDefaultInstance().add(new AbstractTween(length) {
 
             @Override
             protected void doInterpolate(double t) {
                 if (t == 1) {
-                    mat.setColor("Color", target);
-                    //mat.setFloat("Speed", targetSpeed);
-                    mat.setFloat("Strength", targetStrength);
+                    mat.setColor("Color", target.color);
+                    mat.setFloat("Speed", target.speed);
+                    mat.setFloat("Scale", target.scale);
+                    mat.setFloat("Strength", target.strength);
                     return;
                 }
-                ColorRGBA mixed = new ColorRGBA();
-                mixed.interpolateLocal(origin, target, (float)t);
+                ColorRGBA mixed = new ColorRGBA().interpolateLocal(origin, target.color, (float)t);
                 mat.setColor("Color", mixed);
 
-//                float speedInt = FastMath.interpolateLinear((float)t, originSpeed, targetSpeed);
-//                mat.setFloat("Speed", speedInt);
+                float speedInt = FastMath.interpolateLinear((float)t, originSpeed, target.speed);
+                mat.setFloat("Speed", speedInt);
 
-                float strengthInt = FastMath.interpolateLinear((float)t, originStrength, targetStrength);
+                float scaleInt = FastMath.interpolateLinear((float)t, originScale, target.scale);
+                mat.setFloat("Scale", scaleInt);
+
+                float strengthInt = FastMath.interpolateLinear((float)t, originStrength, target.strength);
                 mat.setFloat("Strength", strengthInt);
             }
-        };
+        });
     }
 }

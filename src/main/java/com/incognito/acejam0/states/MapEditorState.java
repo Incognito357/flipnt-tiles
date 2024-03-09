@@ -41,6 +41,7 @@ import com.simsilica.lemur.TabbedPanel;
 import com.simsilica.lemur.TextField;
 import com.simsilica.lemur.ValueEditors;
 import com.simsilica.lemur.ValueRenderers;
+import com.simsilica.lemur.anim.Tween;
 import com.simsilica.lemur.component.SpringGridLayout;
 import com.simsilica.lemur.core.VersionedList;
 import com.simsilica.lemur.list.DefaultCellRenderer;
@@ -225,6 +226,8 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                 btnFlip.setEnabled(true);
                 level = prePlayLevel;
                 syncLevel(true);
+                appStateManager.getState(BackgroundRendererState.class)
+                        .setBackgroundState(BackgroundRendererState.BgState.EDITOR, 0.5f);
             } else {
                 if (level == null) {
                     return;
@@ -281,6 +284,8 @@ public class MapEditorState extends TypedBaseAppState<Application> {
         inputManager.addListener(rightClickListener, "editor-rightclick");
 
         appStateManager.getState(MapRendererState.class).setEditing(true);
+        appStateManager.getState(BackgroundRendererState.class)
+                .setBackgroundState(BackgroundRendererState.BgState.EDITOR, 0.5f);
     }
 
     private void generateActionTabs() {
