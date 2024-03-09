@@ -26,7 +26,7 @@ public class BackgroundRendererState extends TypedBaseAppState<Application> {
     public static enum BgState {
         FRONT(7.5f, 1.0f, 1.0f, ColorRGBA.Blue),
         BACK(7.5f, 1.0f, 90.0f, ColorRGBA.Red.mult(0.5f)),
-        COMPLETE(10.0f, 1.5f, 90.0f, ColorRGBA.Green),
+        COMPLETE(10.0f, 1.0f, 90.0f, ColorRGBA.Green),
         EDITOR(7.5f, 1.0f, 1.0f, ColorRGBA.Orange);
 
         final float speed;

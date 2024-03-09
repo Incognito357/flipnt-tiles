@@ -41,7 +41,6 @@ import com.simsilica.lemur.TabbedPanel;
 import com.simsilica.lemur.TextField;
 import com.simsilica.lemur.ValueEditors;
 import com.simsilica.lemur.ValueRenderers;
-import com.simsilica.lemur.anim.Tween;
 import com.simsilica.lemur.component.SpringGridLayout;
 import com.simsilica.lemur.core.VersionedList;
 import com.simsilica.lemur.list.DefaultCellRenderer;
@@ -240,8 +239,8 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                         level.getTitle(),
                         level.getWidth(),
                         level.getHeight(),
-                        level.getMap(),
-                        level.getMap2(),
+                        new ArrayList<>(level.getMap()),
+                        new ArrayList<>(level.getMap2()),
                         BitSet.valueOf(level.getState().toByteArray()),
                         level.getActions());
             }
