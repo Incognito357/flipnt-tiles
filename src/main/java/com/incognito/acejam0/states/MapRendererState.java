@@ -100,7 +100,7 @@ public class MapRendererState extends TypedBaseAppState<Application> {
     }
 
     public void update(Action action) {
-        if (currentTween != null && currentTween.isRunning()) {
+        if (currentTween != null) {
             currentTween.fastForwardPercent(1.0);
             currentTween = null;
         }
@@ -146,11 +146,7 @@ public class MapRendererState extends TypedBaseAppState<Application> {
                             nodeToChange.setMaterial(target);
                             return;
                         }
-                        ColorRGBA lerped = ColorRGBA.fromRGBA255(
-                                (int) FastMath.interpolateLinear((float) t, originCol.r, targetCol.r),
-                                (int) FastMath.interpolateLinear((float) t, originCol.g, targetCol.g),
-                                (int) FastMath.interpolateLinear((float) t, originCol.b, targetCol.b),
-                                (int) FastMath.interpolateLinear((float) t, originCol.a, targetCol.a));
+                        ColorRGBA lerped = new ColorRGBA().interpolateLocal(originCol, targetCol, (float) t);
                         mat.setColor("Color", lerped);
                     }
                 });

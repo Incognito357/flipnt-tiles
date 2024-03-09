@@ -130,7 +130,7 @@ public class PlayerState extends TypedBaseAppState<Application> {
                     return moved.stream()
                             .distinct()
                             .map(v -> v.add(offset))
-                            .map(v -> new ActionInfo((int)v.x, (int)v.y, false, a.getStateChange(), a.getTileChange()));
+                            .map(v -> new ActionInfo((int) v.x, (int) v.y, false, a.getStateChange(), a.getTileChange()));
                 })
                 .toList();
         if (!relativeActions.isEmpty()) {
@@ -186,9 +186,7 @@ public class PlayerState extends TypedBaseAppState<Application> {
 
     private void skipTweens() {
         currentTweens.forEach(t -> {
-            if (t.isRunning()) {
-                t.fastForwardPercent(1.0);
-            }
+            t.fastForwardPercent(1.0);
         });
         currentTweens.clear();
     }
