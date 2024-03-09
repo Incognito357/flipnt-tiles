@@ -235,14 +235,7 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                 appStateManager.attach(new PlayerState(level));
                 GuiGlobals.getInstance().releaseFocus(guiNode);
                 btnFlip.setEnabled(false);
-                prePlayLevel = new Level(
-                        level.getTitle(),
-                        level.getWidth(),
-                        level.getHeight(),
-                        new ArrayList<>(level.getMap()),
-                        new ArrayList<>(level.getMap2()),
-                        BitSet.valueOf(level.getState().toByteArray()),
-                        level.getActions());
+                prePlayLevel = Level.copy(level);
             }
             playing = !playing;
             MapRendererState renderer = appStateManager.getState(MapRendererState.class);

@@ -23,8 +23,8 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public class Level {
-    public static final int MAX_SIZE = 100;
     private static final Logger logger = LogManager.getLogger();
+    public static final int MAX_SIZE = 100;
 
     private final String title;
     private final int width;
@@ -120,6 +120,34 @@ public class Level {
                 .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
         this.numStarts = counts.getOrDefault(Tile.START, 0L).intValue();
         this.numExits = counts.getOrDefault(Tile.EXIT, 0L).intValue();
+    }
+
+    public static Level loadLevel(String name) {
+        try (InputStream in = new FileInputStream("levels/" + name + ".json")) {
+            return Mapper.getMapper().readValue(in, Level.class);
+        } catch (IOException e) {
+            try (InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream("levels/" + name + ".json")) {
+                if (in == null) {
+                    logger.error("Could not load level {}", name);
+                    return null;
+                }
+                return Mapper.getMapper().readValue(in, Level.class);
+            } catch (IOException e2) {
+                logger.error("Could not load level {}", name, e2);
+                return null;
+            }
+        }
+    }
+
+    public static Level copy(Level level) {
+        return new Level(
+                level.getTitle(),
+                level.getWidth(),
+                level.getHeight(),
+                new ArrayList<>(level.getMap()),
+                new ArrayList<>(level.getMap2()),
+                BitSet.valueOf(level.getState().toByteArray()),
+                level.getActions());
     }
 
     @JsonIgnore
@@ -243,22 +271,5 @@ public class Level {
     @Override
     public int hashCode() {
         return Objects.hash(title, width, height, map, map2, state, actions);
-    }
-
-    public static Level loadLevel(String name) {
-        try (InputStream in = new FileInputStream("levels/" + name + ".json")) {
-            return Mapper.getMapper().readValue(in, Level.class);
-        } catch (IOException e) {
-            try (InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream("levels/" + name + ".json")) {
-                if (in == null) {
-                    logger.error("Could not load level {}", name);
-                    return null;
-                }
-                return Mapper.getMapper().readValue(in, Level.class);
-            } catch (IOException e2) {
-                logger.error("Could not load level {}", name, e2);
-                return null;
-            }
-        }
     }
 }

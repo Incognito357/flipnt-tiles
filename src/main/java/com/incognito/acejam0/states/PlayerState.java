@@ -31,6 +31,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -50,6 +51,7 @@ public class PlayerState extends TypedBaseAppState<Application> {
     private final Set<TweenAnimation> currentTweens = new HashSet<>();
     boolean isFlipped = false;
     private Level level;
+    private Level originalLevel;
     private Node rootNode;
     private InputManager inputManager;
     private AppStateManager appStateManager;
@@ -102,8 +104,18 @@ public class PlayerState extends TypedBaseAppState<Application> {
         }
     };
 
+    private final ActionListener resetListener = (name, isPressed, tpf) -> {
+        if (isPressed) {
+            skipTweens();
+            appStateManager.detach(this);
+            appStateManager.attach(new PlayerState(originalLevel));
+            appStateManager.getState(MapRendererState.class).setLevel(originalLevel);
+        }
+    };
+
     public PlayerState(Level level) {
         this.level = level;
+        this.originalLevel = Level.copy(level);
     }
 
     private void doAction(InputBinding dir, Set<Vector2f> moved) {
@@ -285,14 +297,29 @@ public class PlayerState extends TypedBaseAppState<Application> {
                 new KeyTrigger(KeyInput.KEY_RIGHT),
                 new JoyAxisTrigger(0, JoyInput.AXIS_POV_X, true));
         inputManager.addMapping("flip", new KeyTrigger(KeyInput.KEY_LSHIFT));
+        inputManager.addMapping("reset", new KeyTrigger(KeyInput.KEY_R));
 
         addListener(inputManager, InputBinding.UP);
         addListener(inputManager, InputBinding.DOWN);
         addListener(inputManager, InputBinding.LEFT);
         addListener(inputManager, InputBinding.RIGHT);
         inputManager.addListener(flipListener, "flip");
+        inputManager.addListener(resetListener, "reset");
 
         appStateManager.getState(BackgroundRendererState.class).setBackgroundState(BgState.FRONT, 0.5f);
+    }
+
+    @Override
+    protected void onCleanup(Application app) {
+        rootNode.detachChild(playersNode);
+        removeListener(inputManager, InputBinding.UP);
+        removeListener(inputManager, InputBinding.DOWN);
+        removeListener(inputManager, InputBinding.LEFT);
+        removeListener(inputManager, InputBinding.RIGHT);
+        inputManager.removeListener(flipListener);
+        inputManager.deleteMapping("flip");
+        inputManager.removeListener(resetListener);
+        inputManager.deleteMapping("reset");
     }
 
     private void createPlayer(int i, boolean flipped) {
@@ -318,17 +345,6 @@ public class PlayerState extends TypedBaseAppState<Application> {
     private void removeListener(InputManager inputManager, InputBinding mapping) {
         inputManager.removeListener(listeners.get(mapping));
         inputManager.deleteMapping(mapping.name());
-    }
-
-    @Override
-    protected void onCleanup(Application app) {
-        rootNode.detachChild(playersNode);
-        removeListener(inputManager, InputBinding.UP);
-        removeListener(inputManager, InputBinding.DOWN);
-        removeListener(inputManager, InputBinding.LEFT);
-        removeListener(inputManager, InputBinding.RIGHT);
-        inputManager.removeListener(flipListener);
-        inputManager.deleteMapping("flip");
     }
 
     public void setLevel(Level level) {
