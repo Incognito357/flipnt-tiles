@@ -3,6 +3,7 @@ package com.incognito.acejam0.domain;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.incognito.acejam0.utils.FileLoader;
 import com.incognito.acejam0.utils.Mapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -123,20 +124,7 @@ public class Level {
     }
 
     public static Level loadLevel(String name) {
-        try (InputStream in = new FileInputStream("levels/" + name + ".json")) {
-            return Mapper.getMapper().readValue(in, Level.class);
-        } catch (IOException e) {
-            try (InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream("levels/" + name + ".json")) {
-                if (in == null) {
-                    logger.error("Could not load level {}", name);
-                    return null;
-                }
-                return Mapper.getMapper().readValue(in, Level.class);
-            } catch (IOException e2) {
-                logger.error("Could not load level {}", name, e2);
-                return null;
-            }
-        }
+        return FileLoader.readFile("levels/" + name + ".json", Level.class);
     }
 
     public static Level copy(Level level) {

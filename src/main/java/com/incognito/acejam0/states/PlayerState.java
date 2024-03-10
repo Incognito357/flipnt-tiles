@@ -31,7 +31,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -106,16 +105,20 @@ public class PlayerState extends TypedBaseAppState<Application> {
 
     private final ActionListener resetListener = (name, isPressed, tpf) -> {
         if (isPressed) {
-            skipTweens();
-            appStateManager.detach(this);
-            appStateManager.attach(new PlayerState(originalLevel));
-            appStateManager.getState(MapRendererState.class).setLevel(originalLevel);
+            restartLevel();
         }
     };
 
     public PlayerState(Level level) {
         this.level = level;
         this.originalLevel = Level.copy(level);
+    }
+
+    public void restartLevel() {
+        skipTweens();
+        appStateManager.detach(this);
+        appStateManager.attach(new PlayerState(originalLevel));
+        appStateManager.getState(MapRendererState.class).setLevel(originalLevel);
     }
 
     private void doAction(InputBinding dir, Set<Vector2f> moved) {
@@ -131,7 +134,7 @@ public class PlayerState extends TypedBaseAppState<Application> {
 
         if (checkFinish()) {
             appStateManager.getState(BackgroundRendererState.class)
-                    .setBackgroundState(BgState.COMPLETE, 1.5f);
+                    .setBackgroundState(BgState.COMPLETE, 1.0f);
         }
     }
 
@@ -296,30 +299,50 @@ public class PlayerState extends TypedBaseAppState<Application> {
                 new KeyTrigger(KeyInput.KEY_D),
                 new KeyTrigger(KeyInput.KEY_RIGHT),
                 new JoyAxisTrigger(0, JoyInput.AXIS_POV_X, true));
-        inputManager.addMapping("flip", new KeyTrigger(KeyInput.KEY_LSHIFT));
+        inputManager.addMapping("flip", new KeyTrigger(KeyInput.KEY_LSHIFT), new KeyTrigger(KeyInput.KEY_RSHIFT));
         inputManager.addMapping("reset", new KeyTrigger(KeyInput.KEY_R));
 
-        addListener(inputManager, InputBinding.UP);
-        addListener(inputManager, InputBinding.DOWN);
-        addListener(inputManager, InputBinding.LEFT);
-        addListener(inputManager, InputBinding.RIGHT);
+        for (InputBinding i : InputBinding.values()) {
+            addListener(inputManager, i);
+        }
         inputManager.addListener(flipListener, "flip");
         inputManager.addListener(resetListener, "reset");
 
-        appStateManager.getState(BackgroundRendererState.class).setBackgroundState(BgState.FRONT, 0.5f);
+        appStateManager.getState(BackgroundRendererState.class).setBackgroundState(BgState.FRONT, 1.0f);
     }
 
     @Override
     protected void onCleanup(Application app) {
         rootNode.detachChild(playersNode);
-        removeListener(inputManager, InputBinding.UP);
-        removeListener(inputManager, InputBinding.DOWN);
-        removeListener(inputManager, InputBinding.LEFT);
-        removeListener(inputManager, InputBinding.RIGHT);
+        for (InputBinding i : InputBinding.values()) {
+            removeListener(inputManager, i);
+        }
         inputManager.removeListener(flipListener);
         inputManager.deleteMapping("flip");
         inputManager.removeListener(resetListener);
         inputManager.deleteMapping("reset");
+    }
+
+    @Override
+    protected void onEnable() {
+        if (inputManager != null) {
+            for (InputBinding i : InputBinding.values()) {
+                addListener(inputManager, i);
+            }
+            inputManager.addListener(flipListener, "flip");
+            inputManager.addListener(resetListener, "reset");
+        }
+    }
+
+    @Override
+    protected void onDisable() {
+        if (inputManager != null) {
+            for (InputBinding i : InputBinding.values()) {
+                inputManager.removeListener(listeners.get(i));
+            }
+            inputManager.removeListener(flipListener);
+            inputManager.removeListener(resetListener);
+        }
     }
 
     private void createPlayer(int i, boolean flipped) {

@@ -58,6 +58,8 @@ public class Application extends SimpleApplication {
 
         flyCam.setEnabled(false);
         cam.setParallelProjection(true);
+
+        getInputManager().deleteMapping(INPUT_MAPPING_EXIT);
     }
 
     public BitmapFont getGuiFont() {
