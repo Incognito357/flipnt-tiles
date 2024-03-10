@@ -114,13 +114,17 @@ public class Level {
             }
         }
 
+        if (switchActions == null) {
+            this.switchActions = new HashMap<>();
+        } else {
+            this.switchActions = new HashMap<>(switchActions);
+        }
+
         Map<Tile, Long> counts = Stream.concat(this.map.stream(), this.map2.stream())
                 .filter(t -> t == Tile.START || t == Tile.EXIT)
                 .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
         this.numStarts = counts.getOrDefault(Tile.START, 0L).intValue();
         this.numExits = counts.getOrDefault(Tile.EXIT, 0L).intValue();
-
-        this.switchActions = switchActions;
     }
 
     public static Level loadLevel(String name) {

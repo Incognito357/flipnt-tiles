@@ -61,6 +61,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class MapEditorState extends TypedBaseAppState<Application> {
@@ -101,7 +104,9 @@ public class MapEditorState extends TypedBaseAppState<Application> {
 
     private Vector2f camOffset = Vector2f.ZERO.clone();
 
-    private record TileInfo(Tile a, Tile b, boolean flipped) {}
+    private record TileInfo(Tile a, Tile b, boolean flipped) {
+    }
+
     private record ActionInfoEditor(
             InputBinding input,
             Action action,
@@ -286,6 +291,7 @@ public class MapEditorState extends TypedBaseAppState<Application> {
         TabbedPanel actionTabs = new TabbedPanel();
         Arrays.stream(InputBinding.values())
                 .forEach(i -> actionTabs.addTab(i.name(), generateActionTab(i)));
+        actionTabs.addTab("Buttons", generateButtonTab());
         actionTabs.setPreferredSize(new Vector3f(400, 500, 0f));
         actionGui.addChild(actionTabs);
     }
@@ -304,6 +310,7 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                 VersionedList.wrap(inputActions),
                 new DefaultCellRenderer<>() {
                     private final Map<Action, Panel> panels = new HashMap<>();
+
                     @Override
                     public Panel getView(Action actionValue, boolean selected, Panel existing) {
                         return panels.computeIfAbsent(actionValue, v -> {
@@ -408,6 +415,133 @@ public class MapEditorState extends TypedBaseAppState<Application> {
         return c;
     }
 
+    private Panel generateButtonTab() {
+        Container c = new Container(new SpringGridLayout(Axis.Y, Axis.X, FillMode.Last, FillMode.Even));
+        Button btnReload = new Button("Generate");
+        c.addChild(btnReload);
+
+        Map<Integer, Action> switchMap = level == null ? Map.of() : level.getSwitchActions();
+        List<Action> actionsCopy = new ArrayList<>(switchMap.values());
+        ListBox<Action> listActions = new ListBox<>(
+                VersionedList.wrap(actionsCopy),
+                new DefaultCellRenderer<>() {
+                    private final Map<Action, Panel> panels = new HashMap<>();
+
+                    @Override
+                    public Panel getView(Action actionValue, boolean selected, Panel existing) {
+                        return panels.computeIfAbsent(actionValue, v -> {
+                            Container c = new Container(new SpringGridLayout(Axis.Y, Axis.X, FillMode.Last, FillMode.Even));
+                            Container buttons = new Container(new SpringGridLayout(Axis.X, Axis.Y));
+                            Button btnAdd = new Button("Add");
+                            buttons.addChild(btnAdd);
+                            Button btnRemove = new Button("Remove");
+                            buttons.addChild(btnRemove);
+                            c.addChild(buttons);
+
+                            ListBox<ActionInfo> listActionInfo = new ListBox<>(
+                                    VersionedList.wrap(v.getActions()),
+                                    new DefaultCellRenderer<>() {
+                                        private final Map<ActionInfo, Panel> panels = new HashMap<>();
+
+                                        @Override
+                                        public Panel getView(ActionInfo actionInfoValue, boolean selected, Panel existing) {
+                                            return panels.computeIfAbsent(actionInfoValue, v -> {
+                                                Container c = new Container(new SpringGridLayout(Axis.X, Axis.Y));
+                                                Spinner<Double> numX = new Spinner<>(new SequenceModels.RangedSequence(
+                                                        new DefaultRangedValueModel(-Level.MAX_SIZE, Level.MAX_SIZE, v.getX()), 1, 1),
+                                                        ValueRenderers.formattedRenderer("%.0f", "0"));
+                                                numX.setValueEditor(ValueEditors.doubleEditor("%.0f"));
+                                                Spinner<Double> numY = new Spinner<>(new SequenceModels.RangedSequence(
+                                                        new DefaultRangedValueModel(-Level.MAX_SIZE, Level.MAX_SIZE, v.getY()), 1, 1),
+                                                        ValueRenderers.formattedRenderer("%.0f", "0"));
+                                                numY.setValueEditor(ValueEditors.doubleEditor("%.0f"));
+                                                Checkbox chkRelative = new Checkbox("Relative");
+                                                chkRelative.setChecked(v.isRelative());
+
+                                                Spinner<Integer> numState = new Spinner<>(
+                                                        new SequenceModels.ListSequence<>(List.of(-1, 0, 1, 2), v.getStateChange()),
+                                                        new DefaultValueRenderer<>(i -> switch (i) {
+                                                            case -1 -> "Down";
+                                                            case 0 -> "None";
+                                                            case 1 -> "Up";
+                                                            case 2 -> "Flip";
+                                                            default -> "???";
+                                                        }));
+                                                editorActions.add(new ActionInfoEditor(
+                                                        null,
+                                                        actionValue,
+                                                        actionInfoValue,
+                                                        numX,
+                                                        numY,
+                                                        chkRelative,
+                                                        numState));
+                                                c.addChild(new Label("X"));
+                                                c.addChild(numX);
+                                                c.addChild(new Label("Y"));
+                                                c.addChild(numY);
+                                                c.addChild(chkRelative);
+                                                c.addChild(numState);
+                                                return c;
+                                            });
+                                        }
+                                    }, null);
+
+                            btnAdd.addClickCommand(btn -> {
+                                ActionInfo newAction = new ActionInfo(0, 0, false, 0, null);
+                                Integer selection = listActionInfo.getSelectionModel().getSelection();
+                                if (selection == null) {
+                                    listActionInfo.getModel().add(newAction);
+                                } else {
+                                    listActionInfo.getModel().add(selection + 1, newAction);
+                                }
+                            });
+
+                            btnRemove.addClickCommand(btn -> {
+                                Integer selection = listActionInfo.getSelectionModel().getSelection();
+                                if (selection != null) {
+                                    listActionInfo.getModel().remove(selection.intValue());
+                                }
+                            });
+
+                            c.addChild(listActionInfo);
+                            return new RollupPanel(String.valueOf(switchMap.entrySet()
+                                    .stream()
+                                    .filter(kvp -> kvp.getValue().equals(actionValue))
+                                    .map(Map.Entry::getKey)
+                                    .findFirst()
+                                    .orElse(null)), c, null);
+                        });
+                    }
+                }, null);
+        listActions.setVisibleItems(3);
+
+        btnReload.addClickCommand(btn -> {
+            List<Tile> map = level.getMap();
+            List<Tile> map2 = level.getMap2();
+            for (int i = 0; i < map.size(); i++) {
+                Tile t = map.get(i);
+                Tile t2 = map2.get(i);
+
+                if (t == Tile.BUTTON) {
+                    switchMap.computeIfAbsent(i, idx -> new Action(new ArrayList<>()));
+                } else {
+                    switchMap.remove(i);
+                }
+                if (t2 == Tile.BUTTON) {
+                    switchMap.computeIfAbsent(-i, idx -> new Action(new ArrayList<>()));
+                } else {
+                    switchMap.remove(i);
+                }
+            }
+
+            listActions.getModel().clear();
+            listActions.getModel().addAll(switchMap.values());
+        });
+
+        c.addChild(listActions);
+        return c;
+    }
+
     @Override
     protected void onCleanup(Application app) {
         guiNode.detachChild(gui);
@@ -462,7 +596,11 @@ public class MapEditorState extends TypedBaseAppState<Application> {
         for (Iterator<ActionInfoEditor> iterator = editorActions.iterator(); iterator.hasNext(); ) {
             ActionInfoEditor editor = iterator.next();
             if (editor.isChanged()) {
-                List<Action> actions = level.getActions().get(editor.input.ordinal());
+                InputBinding input = editor.input;
+                if (input == null) {
+                    continue;
+                }
+                List<Action> actions = level.getActions().get(input.ordinal());
                 int actionIndex = actions.indexOf(editor.action);
                 if (actionIndex == -1) {
                     iterator.remove();
@@ -476,7 +614,7 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                     continue;
                 }
                 action.getActions().set(actionInfoIndex, newInfo);
-                toAdd.add(new ActionInfoEditor(editor.input, action, newInfo, editor.x, editor.y, editor.relative, editor.state));
+                toAdd.add(new ActionInfoEditor(input, action, newInfo, editor.x, editor.y, editor.relative, editor.state));
                 iterator.remove();
             }
         }
