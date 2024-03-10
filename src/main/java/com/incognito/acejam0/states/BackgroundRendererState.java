@@ -18,16 +18,14 @@ public class BackgroundRendererState extends TypedBaseAppState<Application> {
     private Node rootNode;
     private Geometry background;
     private TweenAnimation currentTween;
+    private BgState currentState;
 
-    private static final float speed = 7.5f;
-    private static final float scale = 1.0f;
-    private static final float strength = 30f;
-
-    public static enum BgState {
+    public enum BgState {
         FRONT(7.5f, 1.0f, 1.0f, ColorRGBA.Blue),
         BACK(7.5f, 1.0f, 90.0f, ColorRGBA.Red.mult(0.5f)),
         COMPLETE(10.0f, 1.0f, 90.0f, ColorRGBA.Green),
-        EDITOR(7.5f, 1.0f, 1.0f, ColorRGBA.Orange);
+        EDITOR(7.5f, 1.0f, 1.0f, ColorRGBA.Orange),
+        MENU(3.5f, 1.0f, 60.0f, ColorRGBA.DarkGray.mult(0.5f));
 
         final float speed;
         final float scale;
@@ -42,13 +40,17 @@ public class BackgroundRendererState extends TypedBaseAppState<Application> {
         }
     }
 
+    public BackgroundRendererState(BgState initialState) {
+        currentState = initialState;
+    }
+
     @Override
     protected void onInitialize(Application app) {
         rootNode = app.getRootNode();
 
         AppSettings settings = app.getContext().getSettings();
         background = new Geometry("", new CenterQuad(settings.getWidth() / 2f, settings.getHeight() / 2f));
-        Material mat = GlobalMaterials.getShaderMaterial(ColorRGBA.Blue, speed, scale, strength);
+        Material mat = GlobalMaterials.getShaderMaterial(currentState.color, currentState.speed, currentState.scale, currentState.strength);
         mat.setBoolean("ScreenSpace", true);
         background.setMaterial(mat);
         background.setLocalTranslation(0, 0, -10f);
