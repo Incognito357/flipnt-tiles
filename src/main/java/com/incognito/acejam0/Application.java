@@ -1,11 +1,12 @@
 package com.incognito.acejam0;
 
-import com.incognito.acejam0.states.BackgroundRendererState;
-import com.incognito.acejam0.states.BackgroundRendererState.BgState;
-import com.incognito.acejam0.states.CameraControlsState;
-import com.incognito.acejam0.states.MainMenuState;
-import com.incognito.acejam0.states.MapEditorState;
-import com.incognito.acejam0.states.MapRendererState;
+import com.incognito.acejam0.domain.Level;
+import com.incognito.acejam0.states.common.BackgroundRendererState;
+import com.incognito.acejam0.states.common.BackgroundRendererState.BgState;
+import com.incognito.acejam0.states.common.CameraControlsState;
+import com.incognito.acejam0.states.game.MapEditorState;
+import com.incognito.acejam0.states.game.MapRendererState;
+import com.incognito.acejam0.states.menu.MainMenuState;
 import com.incognito.acejam0.utils.Builder;
 import com.jme3.app.SimpleApplication;
 import com.jme3.font.BitmapFont;
@@ -15,12 +16,15 @@ import com.simsilica.lemur.anim.AnimationState;
 import com.simsilica.lemur.style.BaseStyles;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
+import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
 public class Application extends SimpleApplication {
     public static Application APP;
+
+    private static final boolean EDIT_MODE = true;
 
     private BitmapFont font;
 
@@ -39,8 +43,13 @@ public class Application extends SimpleApplication {
         app.setDisplayFps(false);
         app.setDisplayStatView(false);
 
-        app.getStateManager().attach(new MainMenuState());
-        //app.getStateManager().attachAll(new MapEditorState(), new MapRendererState(new Level("", 0, 0, List.of(), List.of(), new BitSet(), Map.of())));
+        if (!EDIT_MODE) {
+            app.getStateManager().attach(new MainMenuState());
+        } else {
+            app.getStateManager().attachAll(
+                    new MapEditorState(),
+                    new MapRendererState(new Level("", 0, 0, List.of(), List.of(), new BitSet(), Map.of(), Map.of())));
+        }
 
         APP = app;
 
@@ -59,7 +68,9 @@ public class Application extends SimpleApplication {
         flyCam.setEnabled(false);
         cam.setParallelProjection(true);
 
-        getInputManager().deleteMapping(INPUT_MAPPING_EXIT);
+        if (!EDIT_MODE) {
+            getInputManager().deleteMapping(INPUT_MAPPING_EXIT);
+        }
     }
 
     public BitmapFont getGuiFont() {

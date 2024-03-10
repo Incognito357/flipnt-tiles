@@ -41,13 +41,14 @@ class SerializationTest {
     @Test
     void testLevelSerialization() throws JsonProcessingException {
         Level level = new Level("TITLE", 2, 3,
-                List.of(Tile.START, Tile.FLOOR, Tile.WALL, Tile.EXIT, Tile.EMPTY, Tile.WALL),
+                List.of(Tile.START, Tile.FLOOR, Tile.WALL, Tile.EXIT, Tile.EMPTY, Tile.WALL, Tile.BUTTON),
                 null,
                 new Builder<>(new BitSet(6)).with(BitSet::set, 3).with(BitSet::set, 12).build(),
                 new LinkedHashMap<>(Map.of(
                         0, List.of(new Action(List.of(new ActionInfo(0, 1, false, -1, null)))),
                         1, List.of(new Action(List.of(new ActionInfo(0, 1, true, 0, Tile.WALL), new ActionInfo(1, 0, false, 1, Tile.START))))
-                )));
+                )),
+                new LinkedHashMap<>(Map.of(0, new Action(List.of(new ActionInfo(5, 4, true, 1, Tile.WALL))))));
         String s = Mapper.getMapper().writeValueAsString(level);
         assertEquals("{" +
                 "\"title\":\"TITLE\"," +
@@ -81,6 +82,17 @@ class SerializationTest {
                             "\"tileChange\":3" +
                         "}]" +
                     "}]" +
+                "}," +
+                "\"switchActions\":{" +
+                    "\"0\":{" +
+                        "\"actions\":[{" +
+                            "\"x\":5," +
+                            "\"y\":4," +
+                            "\"relative\":true," +
+                            "\"stateChange\":1," +
+                            "\"tileChange\":1" +
+                        "}]" +
+                    "}" +
                 "}" +
             "}", s);
 

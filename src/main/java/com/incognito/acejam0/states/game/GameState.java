@@ -1,8 +1,10 @@
-package com.incognito.acejam0.states;
+package com.incognito.acejam0.states.game;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.incognito.acejam0.Application;
 import com.incognito.acejam0.domain.Level;
+import com.incognito.acejam0.states.common.TypedBaseAppState;
+import com.incognito.acejam0.states.menu.MainMenuState;
 import com.incognito.acejam0.states.menu.MenuList;
 import com.incognito.acejam0.utils.FileLoader;
 import com.incognito.acejam0.utils.GlobalMaterials;

@@ -20,7 +20,8 @@ public class GlobalMaterials {
             Tile.WALL.name(), ColorRGBA.fromRGBA255(16, 16, 16, 255),
             Tile.FLOOR.name(), ColorRGBA.fromRGBA255(239, 239, 239, 255),
             Tile.START.name(), ColorRGBA.Cyan,
-            Tile.EXIT.name(), ColorRGBA.Green);
+            Tile.EXIT.name(), ColorRGBA.Green,
+            Tile.BUTTON.name(), ColorRGBA.Orange.mult(0.35f));
 
     public static Material getTileMaterial(Tile tile) {
         return mats.computeIfAbsent(tile.name(), GlobalMaterials::createMaterial);

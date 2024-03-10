@@ -1,4 +1,4 @@
-package com.incognito.acejam0.states;
+package com.incognito.acejam0.states.common;
 
 import com.jme3.app.Application;
 import com.jme3.app.state.BaseAppState;

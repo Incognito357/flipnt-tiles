@@ -1,4 +1,4 @@
-package com.incognito.acejam0.states;
+package com.incognito.acejam0.states.game;
 
 import com.incognito.acejam0.Application;
 import com.incognito.acejam0.domain.Action;
@@ -6,7 +6,9 @@ import com.incognito.acejam0.domain.ActionInfo;
 import com.incognito.acejam0.domain.InputBinding;
 import com.incognito.acejam0.domain.Level;
 import com.incognito.acejam0.domain.Tile;
-import com.incognito.acejam0.states.BackgroundRendererState.BgState;
+import com.incognito.acejam0.states.common.BackgroundRendererState;
+import com.incognito.acejam0.states.common.BackgroundRendererState.BgState;
+import com.incognito.acejam0.states.common.TypedBaseAppState;
 import com.incognito.acejam0.utils.GlobalMaterials;
 import com.jme3.app.state.AppStateManager;
 import com.jme3.input.InputManager;

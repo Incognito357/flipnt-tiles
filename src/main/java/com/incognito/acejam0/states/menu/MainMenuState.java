@@ -1,8 +1,11 @@
-package com.incognito.acejam0.states;
+package com.incognito.acejam0.states.menu;
 
 import com.incognito.acejam0.Application;
-import com.incognito.acejam0.states.BackgroundRendererState.BgState;
-import com.incognito.acejam0.states.menu.MenuList;
+import com.incognito.acejam0.states.common.BackgroundRendererState;
+import com.incognito.acejam0.states.common.BackgroundRendererState.BgState;
+import com.incognito.acejam0.states.game.GameState;
+import com.incognito.acejam0.states.common.TypedBaseAppState;
+import com.incognito.acejam0.states.game.MapEditorState;
 import com.jme3.app.state.AppStateManager;
 import com.jme3.font.BitmapFont;
 import com.jme3.input.InputManager;

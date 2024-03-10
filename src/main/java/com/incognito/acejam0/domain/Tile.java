@@ -8,5 +8,6 @@ public enum Tile {
     WALL,
     FLOOR,
     START,
-    EXIT
+    EXIT,
+    BUTTON
 }

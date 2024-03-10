@@ -1,4 +1,4 @@
-package com.incognito.acejam0.states;
+package com.incognito.acejam0.states.game;
 
 import com.incognito.acejam0.Application;
 import com.incognito.acejam0.domain.Action;
@@ -6,6 +6,8 @@ import com.incognito.acejam0.domain.ActionInfo;
 import com.incognito.acejam0.domain.InputBinding;
 import com.incognito.acejam0.domain.Level;
 import com.incognito.acejam0.domain.Tile;
+import com.incognito.acejam0.states.common.BackgroundRendererState;
+import com.incognito.acejam0.states.common.TypedBaseAppState;
 import com.incognito.acejam0.utils.GlobalMaterials;
 import com.incognito.acejam0.utils.Mapper;
 import com.jme3.app.state.AppStateManager;
@@ -199,7 +201,7 @@ public class MapEditorState extends TypedBaseAppState<Application> {
         });
         Button btnNewLevel = new Button("New");
         btnNewLevel.addClickCommand(btn -> {
-            level = new Level("", 0, 0, List.of(), List.of(), new BitSet(), Map.of());
+            level = new Level("", 0, 0, List.of(), List.of(), new BitSet(), Map.of(), Map.of());
             txtLevelName.setText("");
             syncLevel(false);
         });
@@ -550,7 +552,8 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                 map1,
                 map2,
                 state,
-                level == null ? Map.of() : level.getActions());
+                level == null ? Map.of() : level.getActions(),
+                level == null ? Map.of() : level.getSwitchActions());
         syncLevel(true);
     }
 

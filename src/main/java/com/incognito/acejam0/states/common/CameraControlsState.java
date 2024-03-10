@@ -1,6 +1,7 @@
-package com.incognito.acejam0.states;
+package com.incognito.acejam0.states.common;
 
 import com.incognito.acejam0.Application;
+import com.incognito.acejam0.states.game.MapEditorState;
 import com.jme3.input.InputManager;
 import com.jme3.input.KeyInput;
 import com.jme3.input.MouseInput;

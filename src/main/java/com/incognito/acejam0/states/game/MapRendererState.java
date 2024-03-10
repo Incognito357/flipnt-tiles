@@ -1,10 +1,11 @@
-package com.incognito.acejam0.states;
+package com.incognito.acejam0.states.game;
 
 import com.incognito.acejam0.Application;
 import com.incognito.acejam0.domain.Action;
 import com.incognito.acejam0.domain.ActionInfo;
 import com.incognito.acejam0.domain.Level;
 import com.incognito.acejam0.domain.Tile;
+import com.incognito.acejam0.states.common.TypedBaseAppState;
 import com.incognito.acejam0.utils.GlobalMaterials;
 import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
@@ -70,33 +71,46 @@ public class MapRendererState extends TypedBaseAppState<Application> {
         List<Tile> map = level.getMap();
         List<Tile> map2 = level.getMap2();
         for (int i = 0; i < map.size(); i++) {
-            Tile tile = map.get(i);
-            Tile tile2 = map2.get(i);
             int x = i % level.getWidth();
             int y = i / level.getWidth();
-
-            Geometry g = new Geometry("", new CenterQuad(1, 1));
-            g.setMaterial(GlobalMaterials.getTileMaterial(!editing && tile == Tile.START ? Tile.FLOOR : tile));
-            g.setLocalTranslation(x, -y, 0);
-
-            Geometry g2 = new Geometry("", new CenterQuad(1, 1));
-            g2.setMaterial(GlobalMaterials.getTileMaterial(!editing && tile2 == Tile.START ? Tile.FLOOR : tile2));
-            g2.setLocalTranslation(x, -y, 0);
+            Node node = addTile(map.get(i), x, y);
+            Node node2 = addTile(map2.get(i), x, y);
 
             if (level.isTileFlipped(x, y)) {
-                g.rotate(0, FastMath.PI, 0);
+                node.rotate(0, FastMath.PI, 0);
             } else {
-                g2.rotate(0, FastMath.PI, 0);
+                node2.rotate(0, FastMath.PI, 0);
             }
 
-            tiles1.attachChild(g);
-            tiles2.attachChild(g2);
+            tiles1.attachChild(node);
+            tiles2.attachChild(node2);
         }
         Camera camera = getApplication().getCamera();
         camera.setLocation(new Vector3f(level.getWidth() / 2.0f - 0.5f, -level.getHeight() / 2.0f + 0.5f, camera.getLocation().z));
 
         rootNode.attachChild(tiles1);
         rootNode.attachChild(tiles2);
+    }
+
+    private Node addTile(Tile tile, int x, int y) {
+        Node n = new Node();
+
+        if (!editing && tile == Tile.START) {
+            tile = Tile.FLOOR;
+        }
+        if (tile == Tile.BUTTON) {
+            tile = Tile.FLOOR;
+            Geometry button = new Geometry("", new CenterQuad(0.5f, 0.5f));
+            button.setMaterial(GlobalMaterials.getTileMaterial(Tile.BUTTON));
+            button.setLocalTranslation(0, 0, 0.1f);
+            n.attachChild(button);
+        }
+
+        Geometry g = new Geometry("", new CenterQuad(1, 1));
+        g.setMaterial(GlobalMaterials.getTileMaterial(tile));
+        n.setLocalTranslation(x, -y, 0);
+        n.attachChild(g);
+        return n;
     }
 
     public void update(Action action) {

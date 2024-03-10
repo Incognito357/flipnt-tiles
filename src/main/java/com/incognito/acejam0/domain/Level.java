@@ -4,13 +4,9 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.incognito.acejam0.utils.FileLoader;
-import com.incognito.acejam0.utils.Mapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
@@ -34,6 +30,7 @@ public class Level {
     private final List<Tile> map2;
     private final BitSet state;
     private final Map<Integer, List<Action>> actions;
+    private final Map<Integer, Action> switchActions;
     private final int numStarts;
     private final int numExits;
 
@@ -45,7 +42,8 @@ public class Level {
             @JsonProperty("map") List<Tile> map,
             @JsonProperty("map2") List<Tile> map2,
             @JsonProperty("state") BitSet state,
-            @JsonProperty("actions") Map<Integer, List<Action>> actions) {
+            @JsonProperty("actions") Map<Integer, List<Action>> actions,
+            @JsonProperty("switchActions") Map<Integer, Action> switchActions) {
         if (title == null || title.isBlank()) {
             title = UUID.randomUUID().toString();
         }
@@ -121,6 +119,8 @@ public class Level {
                 .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
         this.numStarts = counts.getOrDefault(Tile.START, 0L).intValue();
         this.numExits = counts.getOrDefault(Tile.EXIT, 0L).intValue();
+
+        this.switchActions = switchActions;
     }
 
     public static Level loadLevel(String name) {
@@ -135,7 +135,8 @@ public class Level {
                 new ArrayList<>(level.getMap()),
                 new ArrayList<>(level.getMap2()),
                 BitSet.valueOf(level.getState().toByteArray()),
-                level.getActions());
+                level.getActions(),
+                level.getSwitchActions());
     }
 
     @JsonIgnore
@@ -208,6 +209,10 @@ public class Level {
         return actions;
     }
 
+    public Map<Integer, Action> getSwitchActions() {
+        return switchActions;
+    }
+
     @JsonIgnore
     public int getNumStarts() {
         return numStarts;
@@ -253,11 +258,12 @@ public class Level {
                 Objects.equals(map, level.map) &&
                 Objects.equals(map2, level.map2) &&
                 Objects.equals(state, level.state) &&
-                Objects.equals(actions, level.actions);
+                Objects.equals(actions, level.actions) &&
+                Objects.equals(switchActions, level.switchActions);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(title, width, height, map, map2, state, actions);
+        return Objects.hash(title, width, height, map, map2, state, actions, switchActions);
     }
 }

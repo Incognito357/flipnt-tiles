@@ -1,4 +1,4 @@
-package com.incognito.acejam0.states;
+package com.incognito.acejam0.states.common;
 
 import com.incognito.acejam0.Application;
 import com.incognito.acejam0.utils.GlobalMaterials;
