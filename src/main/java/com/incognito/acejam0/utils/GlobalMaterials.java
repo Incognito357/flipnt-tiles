@@ -28,10 +28,7 @@ public class GlobalMaterials {
 
     private static Material createMaterial(String name) {
         if (Tile.EMPTY.name().equals(name)) {
-            Material mat = new Material(Application.APP.getAssetManager(), Materials.UNSHADED);
-            mat.getAdditionalRenderState().setBlendMode(RenderState.BlendMode.Alpha);
-            mat.setColor("Color", colors.get(name));
-            return mat;
+            return getBgMaterial();
         }
         return getShaderMaterial(colors.get(name), FastMath.nextRandomFloat() * 5f + 5f, FastMath.nextRandomFloat() + 0.45f, 30f);
     }
@@ -41,6 +38,18 @@ public class GlobalMaterials {
             Material mat = new Material(Application.APP.getAssetManager(), Materials.UNSHADED);
             mat.getAdditionalRenderState().setBlendMode(RenderState.BlendMode.Alpha);
             mat.setColor("Color", color);
+            return mat;
+        });
+    }
+
+    public static Material getBgMaterial() {
+        return mats.get("bg");
+    }
+
+    public static Material getBgMaterial(ColorRGBA color, float speed, float scale, float strength) {
+        return mats.computeIfAbsent("bg", n -> {
+            Material mat = getShaderMaterial(color, speed, scale, strength);
+            mat.setBoolean("ScreenSpace", true);
             return mat;
         });
     }

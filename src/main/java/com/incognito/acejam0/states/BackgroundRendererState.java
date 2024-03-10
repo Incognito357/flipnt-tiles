@@ -50,8 +50,7 @@ public class BackgroundRendererState extends TypedBaseAppState<Application> {
 
         AppSettings settings = app.getContext().getSettings();
         background = new Geometry("", new CenterQuad(settings.getWidth() / 2f, settings.getHeight() / 2f));
-        Material mat = GlobalMaterials.getShaderMaterial(currentState.color, currentState.speed, currentState.scale, currentState.strength);
-        mat.setBoolean("ScreenSpace", true);
+        Material mat = GlobalMaterials.getBgMaterial(currentState.color, currentState.speed, currentState.scale, currentState.strength);
         background.setMaterial(mat);
         background.setLocalTranslation(0, 0, -10f);
 
@@ -66,6 +65,7 @@ public class BackgroundRendererState extends TypedBaseAppState<Application> {
     public void setBackgroundState(BgState target, float length) {
         if (currentTween != null) {
             currentTween.fastForwardPercent(1.0);
+            currentState = target;
         }
         Material mat = background.getMaterial();
         ColorRGBA origin = mat.getParamValue("Color");
@@ -81,6 +81,7 @@ public class BackgroundRendererState extends TypedBaseAppState<Application> {
                     mat.setFloat("Speed", target.speed);
                     mat.setFloat("Scale", target.scale);
                     mat.setFloat("Strength", target.strength);
+                    currentState = target;
                     return;
                 }
                 ColorRGBA mixed = new ColorRGBA().interpolateLocal(origin, target.color, (float)t);
