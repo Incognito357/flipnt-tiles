@@ -3,6 +3,7 @@ package com.incognito.acejam0.states.game;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.incognito.acejam0.Application;
 import com.incognito.acejam0.domain.Level;
+import com.incognito.acejam0.states.common.BackgroundRendererState;
 import com.incognito.acejam0.states.common.TypedBaseAppState;
 import com.incognito.acejam0.states.menu.MainMenuState;
 import com.incognito.acejam0.states.menu.MenuList;
@@ -60,7 +61,7 @@ public class GameState extends TypedBaseAppState<Application> {
             currentLevel++;
             if (currentLevel >= levels.size()) {
                 appStateManager.detach(appStateManager.getState(GameState.class));
-                appStateManager.attach(new MainMenuState());
+                appStateManager.attach(new MainMenuState(BackgroundRendererState.BgState.RAINBOW));
             } else {
                 startLevel();
             }

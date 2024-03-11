@@ -12,6 +12,9 @@ import com.jme3.scene.shape.CenterQuad;
 import com.jme3.system.AppSettings;
 import com.simsilica.lemur.anim.AbstractTween;
 
+import java.util.List;
+import java.util.stream.IntStream;
+
 public class BackgroundRendererState extends TypedBaseAppState<Application> {
 
     private Node rootNode;
@@ -23,7 +26,8 @@ public class BackgroundRendererState extends TypedBaseAppState<Application> {
         BACK(7.5f, 1.0f, 90.0f, ColorRGBA.Red.mult(0.5f)),
         COMPLETE(10.0f, 1.0f, 90.0f, ColorRGBA.Green),
         EDITOR(7.5f, 1.0f, 1.0f, ColorRGBA.Orange),
-        MENU(3.5f, 1.0f, 60.0f, ColorRGBA.DarkGray.mult(0.5f));
+        MENU(3.5f, 1.0f, 60.0f, ColorRGBA.DarkGray.mult(0.5f)),
+        RAINBOW(30.0f, 1.0f, 110.0f, ColorRGBA.Black);
 
         final float speed;
         final float scale;
@@ -78,18 +82,33 @@ public class BackgroundRendererState extends TypedBaseAppState<Application> {
                     currentState = target;
                     return;
                 }
-                ColorRGBA mixed = new ColorRGBA().interpolateLocal(origin, target.color, (float)t);
+                ColorRGBA mixed = new ColorRGBA().interpolateLocal(origin, target.color, (float) t);
                 mat.setColor("Color", mixed);
 
-                float speedInt = FastMath.interpolateLinear((float)t, originSpeed, target.speed);
+                float speedInt = FastMath.interpolateLinear((float) t, originSpeed, target.speed);
                 mat.setFloat("Speed", speedInt);
 
-                float scaleInt = FastMath.interpolateLinear((float)t, originScale, target.scale);
+                float scaleInt = FastMath.interpolateLinear((float) t, originScale, target.scale);
                 mat.setFloat("Scale", scaleInt);
 
-                float strengthInt = FastMath.interpolateLinear((float)t, originStrength, target.strength);
+                float strengthInt = FastMath.interpolateLinear((float) t, originStrength, target.strength);
                 mat.setFloat("Strength", strengthInt);
             }
         });
+        if (target == BgState.RAINBOW) {
+            //green last, to blend nicer from level complete
+            List<ColorRGBA> colors = List.of(ColorRGBA.Blue, ColorRGBA.Magenta, ColorRGBA.Red, ColorRGBA.Orange, ColorRGBA.Yellow, ColorRGBA.Green);
+            TweenUtil.addLoop(background, () -> IntStream.range(0, colors.size())
+                    .mapToObj(i -> new AbstractTween(2.0f) {
+                        private final ColorRGBA origin = i == 0 ? colors.get(colors.size() - 1) : colors.get(i - 1);
+                        private final ColorRGBA target = colors.get(i);
+
+                        @Override
+                        protected void doInterpolate(double t) {
+                            mat.setColor("Color", new ColorRGBA().interpolateLocal(origin, target, (float) t));
+                        }
+                    })
+                    .toList());
+        }
     }
 }

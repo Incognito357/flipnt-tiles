@@ -1,10 +1,13 @@
 package com.incognito.acejam0.utils;
 
+import com.simsilica.lemur.anim.AbstractTween;
 import com.simsilica.lemur.anim.AnimationState;
 import com.simsilica.lemur.anim.Tween;
 import com.simsilica.lemur.anim.TweenAnimation;
+import com.simsilica.lemur.anim.Tweens;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.function.Supplier;
 
 public class TweenUtil {
@@ -17,10 +20,17 @@ public class TweenUtil {
         currentTweens.put(key, AnimationState.getDefaultInstance().add(tween.get()));
     }
 
+    public static <T extends Tween> void addLoop(Object key, Supplier<List<T>> tweens) {
+        skip(key);
+        currentTweens.put(key, AnimationState.getDefaultInstance()
+                .add(new TweenAnimation(true, tweens.get().toArray(new Tween[]{}))));
+    }
+
     public static void skip(Object key) {
         TweenAnimation t = currentTweens.remove(key);
         if (t != null) {
             t.fastForwardPercent(1.0);
+            t.cancel();
         }
     }
 

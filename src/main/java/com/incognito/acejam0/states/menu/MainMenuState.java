@@ -3,9 +3,8 @@ package com.incognito.acejam0.states.menu;
 import com.incognito.acejam0.Application;
 import com.incognito.acejam0.states.common.BackgroundRendererState;
 import com.incognito.acejam0.states.common.BackgroundRendererState.BgState;
-import com.incognito.acejam0.states.game.GameState;
 import com.incognito.acejam0.states.common.TypedBaseAppState;
-import com.incognito.acejam0.states.game.MapEditorState;
+import com.incognito.acejam0.states.game.GameState;
 import com.jme3.app.state.AppStateManager;
 import com.jme3.font.BitmapFont;
 import com.jme3.input.InputManager;
@@ -22,6 +21,16 @@ public class MainMenuState extends TypedBaseAppState<Application> {
     private Node guiNode;
     private MenuList menu;
 
+    private final BgState initialState;
+
+    public MainMenuState() {
+        this(BgState.MENU);
+    }
+
+    public MainMenuState(BgState initialState) {
+        this.initialState = initialState;
+    }
+
     @Override
     protected void onInitialize(Application app) {
         BitmapFont guiFont;
@@ -32,7 +41,7 @@ public class MainMenuState extends TypedBaseAppState<Application> {
         AppSettings settings = app.getContext().getSettings();
         AppStateManager appStateManager = app.getStateManager();
 
-        appStateManager.getState(BackgroundRendererState.class).setBackgroundState(BgState.MENU, 1.0f);
+        appStateManager.getState(BackgroundRendererState.class).setBackgroundState(initialState, 1.0f);
 
         menu = new MenuList(guiFont, ColorRGBA.LightGray, ColorRGBA.DarkGray, 50f, BitmapFont.Align.Center, List.of(
                 Map.entry("START", () -> {
