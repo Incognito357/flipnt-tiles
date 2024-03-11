@@ -50,10 +50,12 @@ public class PlayerState extends TypedBaseAppState<Application> {
     private final Map<InputBinding, AtomicInteger> actionStates = new HashMap<>();
     boolean isFlipped = false;
     private Level level;
-    private Level originalLevel;
+    private final Level originalLevel;
     private Node rootNode;
     private InputManager inputManager;
     private AppStateManager appStateManager;
+    private final List<Runnable> completedListeners = new ArrayList<>();
+
     private final Map<InputBinding, ActionListener> listeners = Map.of(
             InputBinding.UP, (name, isPressed, tpf) -> {
                 if (isPressed) {
@@ -117,6 +119,8 @@ public class PlayerState extends TypedBaseAppState<Application> {
         TweenUtil.clearAnimations();
         appStateManager.detach(this);
         appStateManager.attach(new PlayerState(originalLevel));
+        PlayerState p = appStateManager.getState(PlayerState.class);
+        completedListeners.forEach(p::addCompletedListener);
         appStateManager.getState(MapRendererState.class).setLevel(originalLevel);
     }
 
@@ -135,7 +139,7 @@ public class PlayerState extends TypedBaseAppState<Application> {
         moved.forEach((key, value) -> {
             int x = (int) value.x;
             int y = (int) value.y;
-            boolean inactive = key.getLocalTranslation().z < 0;
+            boolean inactive = value.z < 0;
             Tile t = inactive ? level.getInactiveTile(x, y) : level.getActiveTile(x, y);
             if (t == Tile.BUTTON) {
                 int i = y * level.getWidth() + x;
@@ -167,13 +171,15 @@ public class PlayerState extends TypedBaseAppState<Application> {
         if (checkFinish()) {
             appStateManager.getState(BackgroundRendererState.class)
                     .setBackgroundState(BgState.COMPLETE, 1.0f);
+            onDisable();
+            onCompleted();
         }
     }
 
     private boolean checkFinish() {
         // every player must be on an exit
         if (players.stream()
-                .anyMatch(kvp -> (kvp.getKey().getLocalTranslation().z < 0 ?
+                .anyMatch(kvp -> (kvp.getValue().z < 0 ?
                         level.getInactiveTile((int) kvp.getValue().x, (int) kvp.getValue().y) :
                         level.getActiveTile((int) kvp.getValue().x, (int) kvp.getValue().y)) != Tile.EXIT)) {
             return false;
@@ -193,8 +199,9 @@ public class PlayerState extends TypedBaseAppState<Application> {
             int y = i / level.getWidth();
             if (map.get(i) == Tile.EXIT) {
                 long count = players.stream()
-                        .filter(kvp -> kvp.getKey().getLocalTranslation().z > 0)
-                        .filter(kvp -> (int) kvp.getValue().x == x && (int) kvp.getValue().getY() == y)
+                        .filter(kvp -> level.isTileFlipped((int) kvp.getValue().x, (int) kvp.getValue().y) ?
+                                (kvp.getValue().z < 0) : (kvp.getValue().z > 0))
+                        .filter(kvp -> (int) kvp.getValue().x == x && (int) kvp.getValue().y == y)
                         .count();
                 if (count > maxPlayerPerExit) {
                     return false;
@@ -206,8 +213,9 @@ public class PlayerState extends TypedBaseAppState<Application> {
             }
             if (map2.get(i) == Tile.EXIT) {
                 long count = players.stream()
-                        .filter(kvp -> kvp.getKey().getLocalTranslation().z < 0)
-                        .filter(kvp -> (int) kvp.getValue().x == x && (int) kvp.getValue().getY() == y)
+                        .filter(kvp -> level.isTileFlipped((int) kvp.getValue().x, (int) kvp.getValue().y) ?
+                                (kvp.getValue().z > 0) : (kvp.getValue().z < 0))
+                        .filter(kvp -> (int) kvp.getValue().x == x && (int) kvp.getValue().y == y)
                         .count();
                 if (count > maxPlayerPerExit) {
                     return false;
@@ -222,9 +230,9 @@ public class PlayerState extends TypedBaseAppState<Application> {
     }
 
     private void updateState(Action action, Collection<Vector3f> moved) {
-        Map<Vector3f, Boolean> tiles = players.stream()
+        Map<Vector2f, Boolean> tiles = players.stream()
                 .collect(Collectors.toMap(
-                        Map.Entry::getValue,
+                        kvp -> new Vector2f(kvp.getValue().x, kvp.getValue().y),
                         kvp -> level.isTileFlipped((int) kvp.getValue().x, (int) kvp.getValue().y),
                         (a, b) -> a));
 
@@ -247,10 +255,10 @@ public class PlayerState extends TypedBaseAppState<Application> {
         appStateManager.getState(MapRendererState.class).update(action);
 
         players.stream()
-                .filter(kvp -> level.isTileFlipped((int) kvp.getValue().x, (int) kvp.getValue().y) != tiles.get(kvp.getValue()))
+                .filter(kvp -> level.isTileFlipped((int) kvp.getValue().x, (int) kvp.getValue().y) != tiles.get(new Vector2f(kvp.getValue().x, kvp.getValue().y)))
                 .forEach(kvp -> {
                     logger.info("Tweening from {} to {}", kvp.getKey().getLocalTranslation(), kvp.getKey().getLocalTranslation().mult(1, 1, -1));
-                    kvp.getValue().z *= -1;
+                    kvp.getValue().setZ(kvp.getValue().z * -1);
                     TweenUtil.addAnimation(kvp.getKey(), () -> SpatialTweens.move(
                             kvp.getKey(), null,
                             kvp.getKey().getLocalTranslation().mult(1, 1, -1),
@@ -397,7 +405,11 @@ public class PlayerState extends TypedBaseAppState<Application> {
         inputManager.deleteMapping(mapping.name());
     }
 
-    public void setLevel(Level level) {
-        this.level = level;
+    public void addCompletedListener(Runnable listener) {
+        completedListeners.add(listener);
+    }
+
+    private void onCompleted() {
+        completedListeners.forEach(Runnable::run);
     }
 }

@@ -24,7 +24,7 @@ import java.util.logging.Logger;
 public class Application extends SimpleApplication {
     public static Application APP;
 
-    private static final boolean EDIT_MODE = true;
+    private static final boolean EDIT_MODE = false;
 
     private BitmapFont font;
 

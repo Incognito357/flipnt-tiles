@@ -20,14 +20,11 @@ import com.jme3.scene.Spatial;
 import com.jme3.scene.shape.CenterQuad;
 import com.simsilica.lemur.anim.AbstractTween;
 import com.simsilica.lemur.anim.SpatialTweens;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.util.List;
 
 public class MapRendererState extends TypedBaseAppState<Application> {
 
-    private static final Logger logger = LogManager.getLogger();
     private final Node tiles1 = new Node();
     private final Node tiles2 = new Node();
     private Node rootNode;
@@ -48,6 +45,7 @@ public class MapRendererState extends TypedBaseAppState<Application> {
     @Override
     protected void onCleanup(Application app) {
         rootNode.detachChild(tiles1);
+        rootNode.detachChild(tiles2);
     }
 
     public void setLevel(Level level) {

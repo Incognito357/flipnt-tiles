@@ -11,8 +11,6 @@ import com.jme3.scene.Node;
 import com.jme3.scene.shape.CenterQuad;
 import com.jme3.system.AppSettings;
 import com.simsilica.lemur.anim.AbstractTween;
-import com.simsilica.lemur.anim.AnimationState;
-import com.simsilica.lemur.anim.TweenAnimation;
 
 public class BackgroundRendererState extends TypedBaseAppState<Application> {
 

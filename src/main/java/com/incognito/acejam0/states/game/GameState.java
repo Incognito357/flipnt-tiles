@@ -9,6 +9,7 @@ import com.incognito.acejam0.states.menu.MenuList;
 import com.incognito.acejam0.utils.FileLoader;
 import com.incognito.acejam0.utils.GlobalMaterials;
 import com.incognito.acejam0.utils.GuiText;
+import com.incognito.acejam0.utils.TweenUtil;
 import com.jme3.app.state.AppStateManager;
 import com.jme3.font.BitmapFont;
 import com.jme3.font.BitmapText;
@@ -24,11 +25,7 @@ import com.jme3.scene.Node;
 import com.jme3.scene.shape.Quad;
 import com.jme3.system.AppSettings;
 import com.simsilica.lemur.anim.AbstractTween;
-import com.simsilica.lemur.anim.AnimationState;
 import com.simsilica.lemur.anim.SpatialTweens;
-import com.simsilica.lemur.anim.Tween;
-import com.simsilica.lemur.anim.TweenAnimation;
-import com.simsilica.lemur.anim.Tweens;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -45,14 +42,28 @@ public class GameState extends TypedBaseAppState<Application> {
     private Node menuNode;
     private Geometry menuScreen;
     private MenuList menu;
-    private TweenAnimation menuAnimation = null;
 
     private boolean menuOpen = false;
     private List<String> levels;
+    private int currentLevel = 0;
 
     private final ActionListener menuListener = (name, isPressed, tpf) -> {
         if (isPressed) {
             toggleMenu();
+        }
+    };
+
+    private final ActionListener nextLevelListener = (name, isPressed, tpf) -> {
+        if (isPressed && !menuOpen) {
+            appStateManager.detach(appStateManager.getState(MapRendererState.class));
+            appStateManager.detach(appStateManager.getState(PlayerState.class));
+            currentLevel++;
+            if (currentLevel >= levels.size()) {
+                appStateManager.detach(appStateManager.getState(GameState.class));
+                appStateManager.attach(new MainMenuState());
+            } else {
+                startLevel();
+            }
         }
     };
 
@@ -68,13 +79,8 @@ public class GameState extends TypedBaseAppState<Application> {
         }
         menuOpen = !menuOpen;
 
-        if (menuAnimation != null) {
-            menuAnimation.fastForwardPercent(1.0);
-            menuAnimation = null;
-        }
-
-        Tween move = SpatialTweens.move(menuNode, null, menuNode.getLocalTranslation().add(offset), 1.0);
-        Tween bg = new AbstractTween(0.5f) {
+        TweenUtil.addAnimation(menuNode, () -> SpatialTweens.move(menuNode, null, menuNode.getLocalTranslation().add(offset), 1.0));
+        TweenUtil.addAnimation(menuScreen, () -> new AbstractTween(0.5f) {
             private final Material mat = menuScreen.getMaterial();
             private final ColorRGBA original = mat.getParamValue("Color");
             private final ColorRGBA target = menuOpen ? ColorRGBA.fromRGBA255(0, 0, 0, 128) : ColorRGBA.fromRGBA255(0, 0, 0, 0);
@@ -87,8 +93,7 @@ public class GameState extends TypedBaseAppState<Application> {
                 ColorRGBA lerped = new ColorRGBA().interpolateLocal(original, target, (float) t);
                 mat.setColor("Color", lerped);
             }
-        };
-        menuAnimation = AnimationState.getDefaultInstance().add(Tweens.parallel(move, bg));
+        });
     }
 
     @Override
@@ -132,29 +137,44 @@ public class GameState extends TypedBaseAppState<Application> {
         guiNode.attachChild(menuNode);
 
         menuScreen = new Geometry("", new Quad(settings.getWidth(), settings.getHeight()));
-        menuScreen.setMaterial(GlobalMaterials.getDebugMaterial(ColorRGBA.fromRGBA255(0, 0, 0, 0)));
+        ColorRGBA screenColor = ColorRGBA.fromRGBA255(0, 0, 0, 0);
+        Material mat = GlobalMaterials.getDebugMaterial(screenColor);
+        mat.setColor("Color", screenColor); //shared material, reset back to initial invisible color
+        menuScreen.setMaterial(mat);
         guiNode.attachChild(menuScreen);
 
         inputManager.addMapping("menu", new KeyTrigger(KeyInput.KEY_ESCAPE));
         inputManager.addListener(menuListener, "menu");
+        inputManager.addMapping("nextLevel", new KeyTrigger(KeyInput.KEY_SPACE), new KeyTrigger(KeyInput.KEY_RETURN));
 
         levels = FileLoader.readFile("levels.json", new TypeReference<>() {});
         if (levels == null || levels.isEmpty()) {
             logger.error("No levels found");
             return;
         }
-        Level level = Level.loadLevel(levels.get(0));
+
+        startLevel();
+    }
+
+    private void startLevel() {
+        inputManager.removeListener(nextLevelListener);
+        Level level = Level.loadLevel(levels.get(currentLevel));
         appStateManager.attachAll(new MapRendererState(level), new PlayerState(level));
+        appStateManager.getState(PlayerState.class).addCompletedListener(() -> {
+            inputManager.addListener(nextLevelListener, "nextLevel");
+            //show splash text
+        });
     }
 
     @Override
     protected void onCleanup(Application app) {
-        toggleMenu();
         guiNode.detachChild(menuNode);
         guiNode.detachChild(menuScreen);
         menu.cleanup(inputManager);
         inputManager.removeListener(menuListener);
         inputManager.deleteMapping("menu");
+        inputManager.removeListener(nextLevelListener);
+        inputManager.deleteMapping("nextLevel");
 
         appStateManager.detach(appStateManager.getState(MapRendererState.class));
         appStateManager.detach(appStateManager.getState(PlayerState.class));
