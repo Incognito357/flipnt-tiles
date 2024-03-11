@@ -6,6 +6,7 @@ MaterialDef background {
         Float Scale
         Float Strength
         Boolean ScreenSpace
+        Boolean LocalSpace
     }
 
     Technique {

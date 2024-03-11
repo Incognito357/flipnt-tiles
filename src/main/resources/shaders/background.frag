@@ -8,9 +8,11 @@ uniform float m_Speed;
 uniform float m_Scale;
 uniform float m_Strength;
 uniform bool m_ScreenSpace;
+uniform bool m_LocalSpace;
 
 in vec4 gl_FragCoord;
 in vec4 worldPos;
+in vec2 texCoord;
 
 float fbm(in fnl_state _state, in fnl_state _state2, in vec2 _st, in float _t) {
     fnlDomainWarp3D(_state2, _st.x, _t, _st.y);
@@ -36,37 +38,9 @@ void main() {
     state2.lacunarity = 2.0f;
     state2.gain = .5f;
 
-    vec2 coord = m_ScreenSpace ? gl_FragCoord.xy : (worldPos.xy * 100.0f);
+    vec2 coord = m_ScreenSpace ? gl_FragCoord.xy : ((m_LocalSpace ? texCoord.xy : worldPos.xy) * 100.0f);
 
-    //float noise = fnlGetNoise3D(state, gl_FragCoord.x, g_Time * 10.0, gl_FragCoord.y) / 2.f + 0.5f;
     float f = fbm(state, state2, coord, g_Time * m_Speed);
-    //gl_FragColor = vec4(noise, noise, noise, 1.0) * m_Color;
-
-//    vec2 st = gl_FragCoord.xy;
-//    vec3 color = vec3(0.0);
-//
-//    vec2 q = vec2(0.0);
-//    q.x = fbm(state, st);
-//    q.y = fbm(state, st + vec2(1.0));
-//
-//    vec2 r = vec2(0.0);
-//    r.x = fbm(state, st + 1.0 * q + vec2(1.7, 9.2) + .15 * g_Time);
-//    r.y = fbm(state, st + 1.0 * q + vec2(8.3, 2.8) + .126 * g_Time);
-//
-//    float f = fbm(state, st + r);
-//
-//    vec3 color = mix(vec3(0.101961, 0.619608, 0.666667),
-//                vec3(0.666667, 0.666667, 0.498039),
-//                clamp((f * f) * 4.0, 0.0, 1.0));
-//    color = mix(color,
-//                vec3(0, 0, 0.164706),
-//                clamp(length(q), 0.0, 1.0));
-//    color = mix(color,
-//                vec3(0.666667, 1, 1),
-//                clamp(length(r.x), 0.0, 1.0));
 
     gl_FragColor = vec4((f * f * f + 0.6 * f * f + 0.5 * f) * m_Color.rgb, m_Color.a);
-
-    // Output to screen
-    //gl_FragColor = vec4(noise, noise, noise, 1.0) * m_Color;
 }

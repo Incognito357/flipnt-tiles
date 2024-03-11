@@ -63,6 +63,7 @@ public class GlobalMaterials {
         mat.setFloat("Scale", scale);
         mat.setFloat("Strength", strength);
         mat.setBoolean("ScreenSpace", false);
+        mat.setBoolean("LocalSpace", false);
         return mat;
     }
 }

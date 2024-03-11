@@ -18,6 +18,7 @@ import com.jme3.input.KeyInput;
 import com.jme3.input.controls.ActionListener;
 import com.jme3.input.controls.JoyAxisTrigger;
 import com.jme3.input.controls.KeyTrigger;
+import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.FastMath;
 import com.jme3.math.Vector2f;
@@ -374,11 +375,13 @@ public class PlayerState extends TypedBaseAppState<Application> {
         int z = flipped ? -1 : 1;
         logger.info("Creating player at {}, {} ({})", x, y, flipped ? "back" : "front");
         Geometry g = new Geometry("", new Sphere(16, 2, 0.4f));
-        g.setMaterial(GlobalMaterials.getShaderMaterial(
+        Material mat = GlobalMaterials.getShaderMaterial(
                 flipped ? ColorRGBA.Magenta : ColorRGBA.Cyan,
                 FastMath.nextRandomFloat() * 5f + 5f,
                 FastMath.nextRandomFloat() + 0.45f,
-                FastMath.nextRandomFloat() * 30f + 25f));
+                FastMath.nextRandomFloat() * 30f + 25f);
+        mat.setBoolean("LocalSpace", true);
+        g.setMaterial(mat);
         g.rotate(FastMath.HALF_PI, 0, 0);
         g.setLocalTranslation(x, -y, z);
         players.add(Map.entry(g, new Vector3f(x, y, z)));
