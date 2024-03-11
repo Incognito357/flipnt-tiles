@@ -33,6 +33,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -42,6 +43,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class PlayerState extends TypedBaseAppState<Application> {
 
@@ -59,7 +61,7 @@ public class PlayerState extends TypedBaseAppState<Application> {
     private final Map<InputBinding, ActionListener> listeners = Map.of(
             InputBinding.UP, (name, isPressed, tpf) -> {
                 if (isPressed) {
-                    Set<Vector2f> moved = move(0, -1);
+                    Map<Spatial, Vector2f> moved = move(0, -1);
                     if (!moved.isEmpty()) {
                         doAction(InputBinding.UP, moved);
                     }
@@ -67,7 +69,7 @@ public class PlayerState extends TypedBaseAppState<Application> {
             },
             InputBinding.DOWN, (name, isPressed, tpf) -> {
                 if (isPressed) {
-                    Set<Vector2f> moved = move(0, 1);
+                    Map<Spatial, Vector2f> moved = move(0, 1);
                     if (!moved.isEmpty()) {
                         doAction(InputBinding.DOWN, moved);
                     }
@@ -75,7 +77,7 @@ public class PlayerState extends TypedBaseAppState<Application> {
             },
             InputBinding.LEFT, (name, isPressed, tpf) -> {
                 if (isPressed) {
-                    Set<Vector2f> moved = move(-1, 0);
+                    Map<Spatial, Vector2f> moved = move(-1, 0);
                     if (!moved.isEmpty()) {
                         doAction(InputBinding.LEFT, moved);
                     }
@@ -83,7 +85,7 @@ public class PlayerState extends TypedBaseAppState<Application> {
             },
             InputBinding.RIGHT, (name, isPressed, tpf) -> {
                 if (isPressed) {
-                    Set<Vector2f> moved = move(1, 0);
+                    Map<Spatial, Vector2f> moved = move(1, 0);
                     if (!moved.isEmpty()) {
                         doAction(InputBinding.RIGHT, moved);
                     }
@@ -94,7 +96,7 @@ public class PlayerState extends TypedBaseAppState<Application> {
         if (isPressed) {
             skipTweens();
             List<ActionInfo> flips = IntStream.range(0, level.getMap().size())
-                    .mapToObj(i -> new ActionInfo(i % level.getWidth(), i / level.getWidth(), false, 2, null))
+                    .mapToObj(i -> new ActionInfo(i % level.getWidth(), i / level.getWidth(), false, 2, null, 0))
                     .toList();
 
             updateState(new Action(flips), Set.of());
@@ -123,16 +125,49 @@ public class PlayerState extends TypedBaseAppState<Application> {
         appStateManager.getState(MapRendererState.class).setLevel(originalLevel);
     }
 
-    private void doAction(InputBinding dir, Set<Vector2f> moved) {
+    private void doAction(InputBinding dir, Map<Spatial, Vector2f> moved) {
         AtomicInteger state = actionStates.computeIfAbsent(dir, d -> new AtomicInteger(0));
         List<Action> actions = level.getActions().getOrDefault(dir.ordinal(), List.of());
         if (!actions.isEmpty() && state.get() < actions.size() && state.get() >= 0) {
-            updateState(actions.get(state.getAndIncrement()), moved);
+            updateState(actions.get(state.getAndIncrement()), moved.values());
 
             if (state.get() >= actions.size()) {
                 state.set(0);
             }
         }
+
+        Map<Integer, Action> switchActions = level.getSwitchActions();
+        moved.forEach((key, value) -> {
+            int x = (int) value.x;
+            int y = (int) value.y;
+            boolean inactive = key.getLocalTranslation().z < 0;
+            Tile t = inactive ? level.getInactiveTile(x, y) : level.getActiveTile(x, y);
+            if (t == Tile.BUTTON) {
+                int i = y * level.getWidth() + x;
+                if (inactive) {
+                    i *= -1;
+                }
+                Action action = switchActions.get(i);
+                if (action.getActions().stream().anyMatch(a -> a.getTileChangeSide() > 0)) {
+                    Action newAction = new Action(action.getActions().stream()
+                            .map(a -> {
+                                int side = a.getTileChangeSide();
+                                if (side <= 0) {
+                                    return a;
+                                } else if (side == 1) {
+                                    side = inactive ? -1 : 0;
+                                } else if (side == 2) {
+                                    side = inactive ? 0 : 1;
+                                }
+                                return new ActionInfo(a.getX(), a.getY(), a.isRelative(), a.getStateChange(), a.getTileChange(), side);
+                            })
+                            .toList());
+                    updateState(newAction, List.of(value));
+                } else {
+                    updateState(action, List.of(value));
+                }
+            }
+        });
 
         if (checkFinish()) {
             appStateManager.getState(BackgroundRendererState.class)
@@ -151,7 +186,7 @@ public class PlayerState extends TypedBaseAppState<Application> {
 
         // if more players than exits, some exits will need more than one player, but spread evenly
         // to prevent piling all players onto a single exit
-        int maxPlayerPerExit = (int)FastMath.ceil(level.getNumStarts() / (float)level.getNumExits());
+        int maxPlayerPerExit = (int) FastMath.ceil(level.getNumStarts() / (float) level.getNumExits());
 
         // if more exits than players, some exits will be empty, so stop checking early once all
         // players are accounted for
@@ -191,7 +226,7 @@ public class PlayerState extends TypedBaseAppState<Application> {
         return false;
     }
 
-    private void updateState(Action action, Set<Vector2f> moved) {
+    private void updateState(Action action, Collection<Vector2f> moved) {
         Map<Vector2f, Boolean> tiles = players.stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getValue,
@@ -205,7 +240,7 @@ public class PlayerState extends TypedBaseAppState<Application> {
                     return moved.stream()
                             .distinct()
                             .map(v -> v.add(offset))
-                            .map(v -> new ActionInfo((int) v.x, (int) v.y, false, a.getStateChange(), a.getTileChange()));
+                            .map(v -> new ActionInfo((int) v.x, (int) v.y, false, a.getStateChange(), a.getTileChange(), a.getTileChangeSide()));
                 })
                 .toList();
         if (!relativeActions.isEmpty()) {
@@ -230,8 +265,8 @@ public class PlayerState extends TypedBaseAppState<Application> {
         currentTweens.add(AnimationState.getDefaultInstance().add(Tweens.parallel(tweens.toArray(new Tween[0]))));
     }
 
-    private Set<Vector2f> move(int dx, int dy) {
-        Set<Vector2f> moved = new HashSet<>();
+    private Map<Spatial, Vector2f> move(int dx, int dy) {
+        Map<Spatial, Vector2f> moved = new HashMap<>();
         for (Map.Entry<Spatial, Vector2f> kvp : players) {
             Vector2f p = kvp.getValue();
             int x = (int) p.x;
@@ -254,7 +289,7 @@ public class PlayerState extends TypedBaseAppState<Application> {
             p.x = nx;
             p.y = ny;
             kvp.getKey().setLocalTranslation(kvp.getKey().getLocalTranslation().add(dx, -dy, 0));
-            moved.add(p);
+            moved.put(kvp.getKey(), p);
         }
         return moved;
     }

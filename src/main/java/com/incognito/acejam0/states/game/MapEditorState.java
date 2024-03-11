@@ -153,7 +153,7 @@ public class MapEditorState extends TypedBaseAppState<Application> {
         }
 
         ActionInfo getUpdatedInfo() {
-            return new ActionInfo(x.getValue().intValue(), y.getValue().intValue(), relative.isChecked(), state.getValue(), null);
+            return new ActionInfo(x.getValue().intValue(), y.getValue().intValue(), relative.isChecked(), state.getValue(), null, info.getTileChangeSide());
         }
     }
 
@@ -253,7 +253,7 @@ public class MapEditorState extends TypedBaseAppState<Application> {
 
         btnFlip.addClickCommand(btn -> {
             List<ActionInfo> flips = IntStream.range(0, level.getMap().size())
-                    .mapToObj(i -> new ActionInfo(i % level.getWidth(), i / level.getWidth(), false, 2, null))
+                    .mapToObj(i -> new ActionInfo(i % level.getWidth(), i / level.getWidth(), false, 2, null, 0))
                     .toList();
             appStateManager.getState(MapRendererState.class).update(new Action(flips));
         });
@@ -371,7 +371,7 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                                     }, null);
 
                             btnAdd.addClickCommand(btn -> {
-                                ActionInfo newAction = new ActionInfo(0, 0, false, 0, null);
+                                ActionInfo newAction = new ActionInfo(0, 0, false, 0, null, 0);
                                 Integer selection = listActionInfo.getSelectionModel().getSelection();
                                 if (selection == null) {
                                     listActionInfo.getModel().add(newAction);
@@ -487,7 +487,7 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                                     }, null);
 
                             btnAdd.addClickCommand(btn -> {
-                                ActionInfo newAction = new ActionInfo(0, 0, false, 0, null);
+                                ActionInfo newAction = new ActionInfo(0, 0, false, 0, null, 0);
                                 Integer selection = listActionInfo.getSelectionModel().getSelection();
                                 if (selection == null) {
                                     listActionInfo.getModel().add(newAction);

@@ -125,6 +125,7 @@ public class MapRendererState extends TypedBaseAppState<Application> {
             int i = y * level.getWidth() + x;
             int state = change.getStateChange();
             Tile tile = change.getTileChange();
+            int tileSide = change.getTileChangeSide();
             Spatial node1 = tiles1.getChild(i);
             Spatial node2 = tiles2.getChild(i);
 
