@@ -24,8 +24,20 @@ public class CameraControlsState extends TypedBaseAppState<Application> {
     private InputManager inputManager;
     private float scale = 10f;
     private Vector4f frustum;
-    private final AnalogListener zoomIn = (name, value, tpf) -> zoom(-value);
-    private final AnalogListener zoomOut = (name, value, tpf) -> zoom(value);
+    private final AnalogListener zoomIn = (name, value, tpf) -> {
+        if (value == tpf) {
+            zoom(-1);
+        } else {
+            zoom(-value);
+        }
+    };
+    private final AnalogListener zoomOut = (name, value, tpf) -> {
+        if (value == tpf) {
+            zoom(1);
+        } else {
+            zoom(value);
+        }
+    };
     private boolean panning = false;
     private boolean altPressed = false;
     private Vector2f cursor = Vector2f.ZERO.clone();
@@ -80,8 +92,10 @@ public class CameraControlsState extends TypedBaseAppState<Application> {
         camera = app.getCamera();
         inputManager = app.getInputManager();
 
-        inputManager.addMapping("zoomIn", new MouseAxisTrigger(MouseInput.AXIS_WHEEL, false));
-        inputManager.addMapping("zoomOut", new MouseAxisTrigger(MouseInput.AXIS_WHEEL, true));
+        inputManager.addMapping("zoomIn", new MouseAxisTrigger(MouseInput.AXIS_WHEEL, false),
+                new KeyTrigger(KeyInput.KEY_EQUALS), new KeyTrigger(KeyInput.KEY_ADD));
+        inputManager.addMapping("zoomOut", new MouseAxisTrigger(MouseInput.AXIS_WHEEL, true),
+                new KeyTrigger(KeyInput.KEY_MINUS), new KeyTrigger(KeyInput.KEY_SUBTRACT));
         inputManager.addMapping("panDrag", new MouseButtonTrigger(MouseInput.BUTTON_MIDDLE));
         inputManager.addMapping("pan",
                 new MouseAxisTrigger(MouseInput.AXIS_X, true),
