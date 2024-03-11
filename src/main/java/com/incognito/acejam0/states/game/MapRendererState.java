@@ -7,6 +7,7 @@ import com.incognito.acejam0.domain.Level;
 import com.incognito.acejam0.domain.Tile;
 import com.incognito.acejam0.states.common.TypedBaseAppState;
 import com.incognito.acejam0.utils.GlobalMaterials;
+import com.incognito.acejam0.utils.TweenUtil;
 import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.FastMath;
@@ -18,28 +19,20 @@ import com.jme3.scene.Node;
 import com.jme3.scene.Spatial;
 import com.jme3.scene.shape.CenterQuad;
 import com.simsilica.lemur.anim.AbstractTween;
-import com.simsilica.lemur.anim.AnimationState;
 import com.simsilica.lemur.anim.SpatialTweens;
-import com.simsilica.lemur.anim.Tween;
-import com.simsilica.lemur.anim.TweenAnimation;
-import com.simsilica.lemur.anim.Tweens;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class MapRendererState extends TypedBaseAppState<Application> {
 
     private static final Logger logger = LogManager.getLogger();
-
-    private Level level;
-
-    private Node rootNode;
     private final Node tiles1 = new Node();
     private final Node tiles2 = new Node();
+    private Node rootNode;
+    private Level level;
     private boolean editing = false;
-    private TweenAnimation currentTween;
 
     public MapRendererState(Level level) {
         this.level = level;
@@ -114,11 +107,6 @@ public class MapRendererState extends TypedBaseAppState<Application> {
     }
 
     public void update(Action action) {
-        if (currentTween != null) {
-            currentTween.fastForwardPercent(1.0);
-            currentTween = null;
-        }
-        List<Tween> tweens = new ArrayList<>();
         for (ActionInfo change : action.getActions()) {
             int x = change.getX();
             int y = change.getY();
@@ -130,12 +118,12 @@ public class MapRendererState extends TypedBaseAppState<Application> {
 
             boolean oldState = level.isTileFlipped(x, y);
             if (state == 2 || (state == -1 && !oldState) || (state == 1 && oldState)) {
-                tweens.add(SpatialTweens.rotate(
+                TweenUtil.addAnimation(node1, () -> SpatialTweens.rotate(
                         node1, null,
                         oldState ? Quaternion.IDENTITY
                                 : new Quaternion().fromAngleNormalAxis(FastMath.PI, Vector3f.UNIT_Y),
                         0.75));
-                tweens.add(SpatialTweens.rotate(
+                TweenUtil.addAnimation(node2, () -> SpatialTweens.rotate(
                         node2, null,
                         !oldState ? Quaternion.IDENTITY
                                 : new Quaternion().fromAngleNormalAxis(FastMath.PI, Vector3f.UNIT_Y),
@@ -162,7 +150,7 @@ public class MapRendererState extends TypedBaseAppState<Application> {
                 ColorRGBA originCol = origin.getParamValue("Color");
                 ColorRGBA targetCol = target.getParamValue("Color");
                 nodeToChange.setMaterial(mat);
-                tweens.add(new AbstractTween(0.75f) {
+                TweenUtil.addAnimation(nodeToChange, () -> new AbstractTween(0.75f) {
                     @Override
                     protected void doInterpolate(double t) {
                         if (t == 1) {
@@ -177,9 +165,6 @@ public class MapRendererState extends TypedBaseAppState<Application> {
         }
 
         level.performActions(action);
-
-        logger.info("Adding {} tweens", tweens.size());
-        currentTween = AnimationState.getDefaultInstance().add(Tweens.parallel(tweens.toArray(new Tween[0])));
     }
 
     public void setEditing(boolean editing) {

@@ -2,6 +2,7 @@ package com.incognito.acejam0.states.common;
 
 import com.incognito.acejam0.Application;
 import com.incognito.acejam0.utils.GlobalMaterials;
+import com.incognito.acejam0.utils.TweenUtil;
 import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.FastMath;
@@ -17,7 +18,6 @@ public class BackgroundRendererState extends TypedBaseAppState<Application> {
 
     private Node rootNode;
     private Geometry background;
-    private TweenAnimation currentTween;
     private BgState currentState;
 
     public enum BgState {
@@ -63,16 +63,12 @@ public class BackgroundRendererState extends TypedBaseAppState<Application> {
     }
 
     public void setBackgroundState(BgState target, float length) {
-        if (currentTween != null) {
-            currentTween.fastForwardPercent(1.0);
-            currentState = target;
-        }
         Material mat = background.getMaterial();
         ColorRGBA origin = mat.getParamValue("Color");
         float originSpeed = mat.getParamValue("Speed");
         float originScale = mat.getParamValue("Scale");
         float originStrength = mat.getParamValue("Strength");
-        currentTween = AnimationState.getDefaultInstance().add(new AbstractTween(length) {
+        TweenUtil.addAnimation(background, () -> new AbstractTween(length) {
 
             @Override
             protected void doInterpolate(double t) {
