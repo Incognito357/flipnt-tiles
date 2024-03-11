@@ -23,7 +23,7 @@ public class Level {
     private static final Logger logger = LogManager.getLogger();
     public static final int MAX_SIZE = 100;
 
-    private final String title;
+    private final String message;
     private final int width;
     private final int height;
     private final List<Tile> map;
@@ -36,7 +36,7 @@ public class Level {
 
     @JsonCreator
     public Level(
-            @JsonProperty("title") String title,
+            @JsonProperty("message") String message,
             @JsonProperty("width") int width,
             @JsonProperty("height") int height,
             @JsonProperty("map") List<Tile> map,
@@ -44,11 +44,7 @@ public class Level {
             @JsonProperty("state") BitSet state,
             @JsonProperty("actions") Map<Integer, List<Action>> actions,
             @JsonProperty("switchActions") Map<Integer, Action> switchActions) {
-        if (title == null || title.isBlank()) {
-            title = UUID.randomUUID().toString();
-        }
-
-        this.title = title;
+        this.message = message;
         this.width = width;
         this.height = height;
 
@@ -62,12 +58,12 @@ public class Level {
 
         int size = width * height;
         if (map == null || map.isEmpty()) {
-            logger.warn("Missing map for level {}", title);
+            logger.warn("Missing map for level {}", message);
             this.map = IntStream.range(0, size)
                     .mapToObj(i -> Tile.EMPTY)
                     .toList();
         } else if (map.size() < size) {
-            logger.warn("Map data for level {} missing {} tiles (expected {})", title, size - map.size(), size);
+            logger.warn("Map data for level {} missing {} tiles (expected {})", message, size - map.size(), size);
             this.map = new ArrayList<>(map);
             while (this.map.size() < size) {
                 this.map.add(Tile.EMPTY);
@@ -82,7 +78,7 @@ public class Level {
                     .toList();
         } else if (map2.size() < size) {
             this.map2 = new ArrayList<>(map2);
-            logger.warn("Map2 data for level {} missing {} tiles (expected {})", title, size - map2.size(), size);
+            logger.warn("Map2 data for level {} missing {} tiles (expected {})", message, size - map2.size(), size);
             while (this.map2.size() < size) {
                 this.map2.add(Tile.EMPTY);
             }
@@ -92,11 +88,11 @@ public class Level {
 
         if (this.map.size() > size) {
             logger.warn("Map data for level {} is {} tiles larger than expected size {} (extra data is ignored)",
-                    title, this.map.size() - size, size);
+                    message, this.map.size() - size, size);
         }
         if (this.map2.size() > size) {
             logger.warn("Map2 data for level {} is {} tiles larger than expected size {} (extra data is ignored)",
-                    title, this.map2.size() - size, size);
+                    message, this.map2.size() - size, size);
         }
 
         this.state = Objects.requireNonNullElseGet(state, () -> new BitSet(size));
@@ -133,7 +129,7 @@ public class Level {
 
     public static Level copy(Level level) {
         return new Level(
-                level.getTitle(),
+                level.getMessage(),
                 level.getWidth(),
                 level.getHeight(),
                 new ArrayList<>(level.getMap()),
@@ -185,8 +181,8 @@ public class Level {
         return state.get(y * width + x);
     }
 
-    public String getTitle() {
-        return title;
+    public String getMessage() {
+        return message;
     }
 
     public int getWidth() {
@@ -282,7 +278,7 @@ public class Level {
         Level level = (Level) o;
         return width == level.width &&
                 height == level.height &&
-                Objects.equals(title, level.title) &&
+                Objects.equals(message, level.message) &&
                 Objects.equals(map, level.map) &&
                 Objects.equals(map2, level.map2) &&
                 Objects.equals(state, level.state) &&
@@ -292,6 +288,6 @@ public class Level {
 
     @Override
     public int hashCode() {
-        return Objects.hash(title, width, height, map, map2, state, actions, switchActions);
+        return Objects.hash(message, width, height, map, map2, state, actions, switchActions);
     }
 }

@@ -1,5 +1,8 @@
 package com.incognito.acejam0.utils;
 
+import com.jme3.font.BitmapText;
+import com.jme3.material.Material;
+import com.jme3.math.ColorRGBA;
 import com.simsilica.lemur.anim.AbstractTween;
 import com.simsilica.lemur.anim.AnimationState;
 import com.simsilica.lemur.anim.Tween;
@@ -37,5 +40,31 @@ public class TweenUtil {
     public static void clearAnimations() {
         currentTweens.forEach((k, v) -> v.fastForwardPercent(1.0));
         currentTweens.clear();
+    }
+
+    public static void tweenText(BitmapText text, String message, float length, float delay) {
+        ColorRGBA origin = text.getColor();
+        ColorRGBA target = text.getColor().clone().setAlpha(0);
+        boolean skipFirst = text.getText() == null || text.getText().isBlank();
+        boolean skipLast = message == null || message.isBlank();
+        TweenUtil.addAnimation(text, () -> Tweens.sequence(
+                new AbstractTween(skipFirst ? 0f : (skipLast ? length : length / 2.0f)) {
+                    @Override
+                    protected void doInterpolate(double t) {
+                        text.setColor(new ColorRGBA().interpolateLocal(origin, target, (float) t));
+                    }
+                },
+                new AbstractTween(delay) {
+                    @Override
+                    protected void doInterpolate(double t) {
+                        text.setText(message);
+                    }
+                },
+                new AbstractTween(skipLast ? 0f : (skipFirst ? length : length / 2.0f)) {
+                    @Override
+                    protected void doInterpolate(double t) {
+                        text.setColor(new ColorRGBA().interpolateLocal(target, origin, (float) t));
+                    }
+                }));
     }
 }

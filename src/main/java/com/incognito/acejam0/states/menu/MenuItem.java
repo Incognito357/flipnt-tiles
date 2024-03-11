@@ -23,8 +23,11 @@ public class MenuItem extends BitmapText {
 
     public void update() {
         if (selected) {
-            setColor(activeColor.mult(FastMath.interpolateLinear(
-                    (FastMath.cos((System.nanoTime() - selectionStart) * 0.000000004f) + 1f) / 2f, 0.5f, 1f)));
+            float v = FastMath.interpolateLinear(
+                    (FastMath.cos((System.nanoTime() - selectionStart) * 0.000000004f) + 1f) / 2f,
+                    0.5f,
+                    1f);
+            setColor(activeColor.mult(v).setAlpha(1.0f));
         }
     }
 

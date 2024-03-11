@@ -51,7 +51,7 @@ class SerializationTest {
                 new LinkedHashMap<>(Map.of(0, new Action(List.of(new ActionInfo(5, 4, true, 1, Tile.WALL, -1))))));
         String s = Mapper.getMapper().writeValueAsString(level);
         assertEquals("{" +
-                "\"title\":\"TITLE\"," +
+                "\"message\":\"TITLE\"," +
                 "\"width\":2," +
                 "\"height\":3," +               // todo: remove width/height, calculate from max map/map2 size
                 "\"map\":[3,2,1,4,0,5]," +
@@ -110,7 +110,7 @@ class SerializationTest {
         assertEquals(level.getNumStarts(), deserialized.getNumStarts());
         assertEquals(level.getNumExits(), deserialized.getNumExits());
         assertEquals(level.getState(), deserialized.getState());
-        assertEquals(level.getTitle(), deserialized.getTitle());
+        assertEquals(level.getMessage(), deserialized.getMessage());
         assertEquals(level.getActions().size(), deserialized.getActions().size());
         //UUIDs needed to make duplicate actions distinct in editor panel, but breaks equality here
         for (int i = 0; i < level.getActions().size(); i++) {

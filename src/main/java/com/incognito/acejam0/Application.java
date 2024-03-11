@@ -27,6 +27,7 @@ public class Application extends SimpleApplication {
     private static final boolean EDIT_MODE = false;
 
     private BitmapFont font;
+    private BitmapFont fontOutline;
 
     public static void main(String[] args) {
         SLF4JBridgeHandler.removeHandlersForRootLogger();
@@ -59,6 +60,7 @@ public class Application extends SimpleApplication {
     @Override
     public void simpleInitApp() {
         font = getAssetManager().loadFont("font/book_antiqua.fnt");
+        fontOutline = getAssetManager().loadFont("font/book_antiqua_outline.fnt");
 
         GuiGlobals.initialize(this);
         GuiGlobals.getInstance().setCursorEventsEnabled(false);
@@ -75,5 +77,9 @@ public class Application extends SimpleApplication {
 
     public BitmapFont getGuiFont() {
         return font;
+    }
+
+    public BitmapFont getFontOutline() {
+        return fontOutline;
     }
 }

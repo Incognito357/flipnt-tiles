@@ -16,7 +16,7 @@ public class GlobalMaterials {
 
     private static final Map<String, Material> mats = new HashMap<>();
     private static final Map<String, ColorRGBA> colors = Map.of(
-            Tile.EMPTY.name(), ColorRGBA.fromRGBA255(0, 0, 0, 0),
+            Tile.EMPTY.name(), ColorRGBA.BlackNoAlpha,
             Tile.WALL.name(), ColorRGBA.fromRGBA255(16, 16, 16, 255),
             Tile.FLOOR.name(), ColorRGBA.fromRGBA255(239, 239, 239, 255),
             Tile.START.name(), ColorRGBA.Cyan,

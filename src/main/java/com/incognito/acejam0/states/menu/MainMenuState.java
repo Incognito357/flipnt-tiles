@@ -33,9 +33,7 @@ public class MainMenuState extends TypedBaseAppState<Application> {
 
     @Override
     protected void onInitialize(Application app) {
-        BitmapFont guiFont;
         inputManager = app.getInputManager();
-        guiFont = app.getGuiFont();
         guiNode = app.getGuiNode();
 
         AppSettings settings = app.getContext().getSettings();
@@ -43,7 +41,7 @@ public class MainMenuState extends TypedBaseAppState<Application> {
 
         appStateManager.getState(BackgroundRendererState.class).setBackgroundState(initialState, 1.0f);
 
-        menu = new MenuList(guiFont, ColorRGBA.LightGray, ColorRGBA.DarkGray, 50f, BitmapFont.Align.Center, List.of(
+        menu = new MenuList(app.getFontOutline(), ColorRGBA.LightGray, ColorRGBA.DarkGray, 50f, BitmapFont.Align.Center, List.of(
                 Map.entry("START", () -> {
                     appStateManager.detach(this);
                     appStateManager.attach(new GameState());

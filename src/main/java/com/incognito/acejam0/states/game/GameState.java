@@ -14,6 +14,7 @@ import com.incognito.acejam0.utils.TweenUtil;
 import com.jme3.app.state.AppStateManager;
 import com.jme3.font.BitmapFont;
 import com.jme3.font.BitmapText;
+import com.jme3.font.Rectangle;
 import com.jme3.input.InputManager;
 import com.jme3.input.KeyInput;
 import com.jme3.input.controls.ActionListener;
@@ -43,6 +44,7 @@ public class GameState extends TypedBaseAppState<Application> {
     private Node menuNode;
     private Geometry menuScreen;
     private MenuList menu;
+    private BitmapText levelMessage;
 
     private boolean menuOpen = false;
     private List<String> levels;
@@ -111,7 +113,7 @@ public class GameState extends TypedBaseAppState<Application> {
         label.setLocalTranslation(30f, -10f, 0f);
         menuNode.attachChild(label);
 
-        menu = new MenuList(guiFont, ColorRGBA.LightGray, ColorRGBA.DarkGray, 35f, BitmapFont.Align.Left, List.of(
+        menu = new MenuList(app.getFontOutline(), ColorRGBA.LightGray, ColorRGBA.DarkGray, 35f, BitmapFont.Align.Left, List.of(
                 Map.entry("OPTIONS", () -> {
                 }),
                 Map.entry("RESTART", () -> {
@@ -138,7 +140,7 @@ public class GameState extends TypedBaseAppState<Application> {
         guiNode.attachChild(menuNode);
 
         menuScreen = new Geometry("", new Quad(settings.getWidth(), settings.getHeight()));
-        ColorRGBA screenColor = ColorRGBA.fromRGBA255(0, 0, 0, 0);
+        ColorRGBA screenColor = ColorRGBA.BlackNoAlpha;
         Material mat = GlobalMaterials.getDebugMaterial(screenColor);
         mat.setColor("Color", screenColor); //shared material, reset back to initial invisible color
         menuScreen.setMaterial(mat);
@@ -147,6 +149,12 @@ public class GameState extends TypedBaseAppState<Application> {
         inputManager.addMapping("menu", new KeyTrigger(KeyInput.KEY_ESCAPE));
         inputManager.addListener(menuListener, "menu");
         inputManager.addMapping("nextLevel", new KeyTrigger(KeyInput.KEY_SPACE), new KeyTrigger(KeyInput.KEY_RETURN));
+
+        levelMessage = GuiText.makeOutlineText("", ColorRGBA.LightGray, 35f);
+        levelMessage.setBox(new Rectangle(0, levelMessage.getLineHeight() + 60f, settings.getWidth(), levelMessage.getLineHeight() + 60f));
+        levelMessage.setAlignment(BitmapFont.Align.Center);
+        levelMessage.setVerticalAlignment(BitmapFont.VAlign.Center);
+        guiNode.attachChild(levelMessage);
 
         levels = FileLoader.readFile("levels.json", new TypeReference<>() {});
         if (levels == null || levels.isEmpty()) {
@@ -160,10 +168,18 @@ public class GameState extends TypedBaseAppState<Application> {
     private void startLevel() {
         inputManager.removeListener(nextLevelListener);
         Level level = Level.loadLevel(levels.get(currentLevel));
+        if (level == null) {
+            logger.error("Could not load level {} ({})", currentLevel, levels.get(currentLevel));
+            appStateManager.detach(this);
+            appStateManager.attach(new MainMenuState());
+            return;
+        }
+        TweenUtil.tweenText(levelMessage, level.getMessage(), 1.5f, 0.5f);
+
         appStateManager.attachAll(new MapRendererState(level), new PlayerState(level));
         appStateManager.getState(PlayerState.class).addCompletedListener(() -> {
             inputManager.addListener(nextLevelListener, "nextLevel");
-            //show splash text
+            TweenUtil.tweenText(levelMessage, "Press Space/Enter to continue", 1.0f, 0.25f);
         });
     }
 
@@ -171,6 +187,7 @@ public class GameState extends TypedBaseAppState<Application> {
     protected void onCleanup(Application app) {
         guiNode.detachChild(menuNode);
         guiNode.detachChild(menuScreen);
+        guiNode.detachChild(levelMessage);
         menu.cleanup(inputManager);
         inputManager.removeListener(menuListener);
         inputManager.deleteMapping("menu");

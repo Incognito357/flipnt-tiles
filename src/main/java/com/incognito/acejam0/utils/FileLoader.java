@@ -18,9 +18,10 @@ public class FileLoader {
         try (InputStream in = new FileInputStream(file)) {
             return Mapper.getMapper().readValue(in, clazz);
         } catch (IOException e) {
+            logger.warn("Could not read file {} from system, attempting from jar...", file, e);
             try (InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(file)) {
                 if (in == null) {
-                    logger.error("Could not load file {}", file);
+                    logger.error("Could not load file {}, resource is null", file);
                     return null;
                 }
                 return Mapper.getMapper().readValue(in, clazz);
