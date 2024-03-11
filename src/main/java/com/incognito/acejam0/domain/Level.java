@@ -180,16 +180,6 @@ public class Level {
         return data.get(i);
     }
 
-    private void setTile(int x, int y, Tile tile, List<Tile> data) {
-        int i = y * width + x;
-        if (i < 0 || i >= data.size()) {
-            logger.error("Tried to set out of bounds tile at ({}, {}) to {}", x, y, tile);
-            return;
-        }
-
-        data.set(i, tile);
-    }
-
     @JsonIgnore
     public boolean isTileFlipped(int x, int y) {
         return state.get(y * width + x);
@@ -239,20 +229,28 @@ public class Level {
 
     public void performActions(Action change) {
         for (ActionInfo a : change.getActions()) {
-            int stateChange = a.getStateChange();
             int i = a.getY() * width + a.getX();
+            boolean oldState = state.get(i);
+            int stateChange = a.getStateChange();
             Tile t = a.getTileChange();
             int tSide = a.getTileChangeSide();
 
             if (t != null) {
-                if (tSide == -1) {
-                    setTile(a.getX(), a.getY(), t, map2);
-                } else if (tSide == 0) {
-                    setTile(a.getX(), a.getY(), t, map);
+                if (tSide == 0) {
+                    if (state.get(i)) {
+                        map2.set(i, t);
+                    } else {
+                        map.set(i, t);
+                    }
+                } else if (tSide == -1) {
+                    if (state.get(i)) {
+                        map.set(i, t);
+                    } else {
+                        map2.set(i, t);
+                    }
                 }
             }
 
-            boolean oldState = state.get(i);
             if (stateChange == 2) {
                 state.flip(i);
             } else if (stateChange == -1) {

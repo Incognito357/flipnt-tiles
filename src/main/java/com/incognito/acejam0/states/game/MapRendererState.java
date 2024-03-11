@@ -125,13 +125,10 @@ public class MapRendererState extends TypedBaseAppState<Application> {
             int i = y * level.getWidth() + x;
             int state = change.getStateChange();
             Tile tile = change.getTileChange();
-            int tileSide = change.getTileChangeSide();
             Spatial node1 = tiles1.getChild(i);
             Spatial node2 = tiles2.getChild(i);
 
             boolean oldState = level.isTileFlipped(x, y);
-            Tile oldTile = level.getTile(x, y);
-            Tile oldTile2 = level.getTile2(x, y);
             if (state == 2 || (state == -1 && !oldState) || (state == 1 && oldState)) {
                 tweens.add(SpatialTweens.rotate(
                         node1, null,
@@ -145,8 +142,19 @@ public class MapRendererState extends TypedBaseAppState<Application> {
                         0.75));
             }
 
-            Tile tileToChange = oldState ? oldTile2 : oldTile;
-            Spatial nodeToChange = oldState ? node2 : node1;
+            Tile oldTile = level.getTile(x, y);
+            Tile oldTile2 = level.getTile2(x, y);
+            int tileSide = change.getTileChangeSide();
+            Tile tileToChange;
+            Spatial nodeToChange;
+            if (tileSide == 0) {
+                tileToChange = oldState ? oldTile2 : oldTile;
+                nodeToChange = oldState ? node2 : node1;
+            } else {
+                tileToChange = oldState ? oldTile : oldTile2;
+                nodeToChange = oldState ? node1 : node2;
+            }
+
             if (tile != null && tile != tileToChange) {
                 Material origin = GlobalMaterials.getTileMaterial(tileToChange);
                 Material target = GlobalMaterials.getTileMaterial(tile);
