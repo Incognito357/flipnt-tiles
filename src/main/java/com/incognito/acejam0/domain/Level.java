@@ -61,7 +61,7 @@ public class Level {
             logger.warn("Missing map for level {}", message);
             this.map = IntStream.range(0, size)
                     .mapToObj(i -> Tile.EMPTY)
-                    .toList();
+                    .collect(Collectors.toList());
         } else if (map.size() < size) {
             logger.warn("Map data for level {} missing {} tiles (expected {})", message, size - map.size(), size);
             this.map = new ArrayList<>(map);
@@ -75,7 +75,7 @@ public class Level {
         if (map2 == null) {
             this.map2 = IntStream.range(0, size)
                     .mapToObj(i -> Tile.EMPTY)
-                    .toList();
+                    .collect(Collectors.toList());
         } else if (map2.size() < size) {
             this.map2 = new ArrayList<>(map2);
             logger.warn("Map2 data for level {} missing {} tiles (expected {})", message, size - map2.size(), size);
@@ -95,7 +95,11 @@ public class Level {
                     message, this.map2.size() - size, size);
         }
 
-        this.state = Objects.requireNonNullElseGet(state, () -> new BitSet(size));
+        if (state == null) {
+            this.state = new BitSet(size);
+        } else {
+            this.state = state;
+        }
 
         if (actions == null) {
             actions = new HashMap<>();

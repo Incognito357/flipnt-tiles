@@ -45,8 +45,8 @@ public class TweenUtil {
     public static void tweenText(BitmapText text, String message, float length, float delay) {
         ColorRGBA origin = text.getColor();
         ColorRGBA target = text.getColor().clone().setAlpha(0);
-        boolean skipFirst = text.getText() == null || text.getText().isBlank();
-        boolean skipLast = message == null || message.isBlank();
+        boolean skipFirst = text.getText() == null || text.getText().isEmpty();
+        boolean skipLast = message == null || message.isEmpty();
         TweenUtil.addAnimation(text, () -> Tweens.sequence(
                 new AbstractTween(skipFirst ? 0f : (skipLast ? length : length / 2.0f)) {
                     @Override

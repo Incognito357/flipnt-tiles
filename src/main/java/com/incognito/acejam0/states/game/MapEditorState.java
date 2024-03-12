@@ -52,15 +52,18 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class MapEditorState extends TypedBaseAppState<Application> {
@@ -107,22 +110,32 @@ public class MapEditorState extends TypedBaseAppState<Application> {
 
     private Vector2f camOffset = Vector2f.ZERO.clone();
 
-    private record TileInfo(Tile a, Tile b, boolean flipped) {}
+    private static class TileInfo {
+        private final Tile a;
+        private final Tile b;
+        private final boolean flipped;
 
-    private record ActionInfoEditor(
-            InputBinding input,
-            Action action,
-            ActionInfo info,
-            Spinner<Double> x,
-            Spinner<Double> y,
-            Checkbox relative,
-            Spinner<Integer> state,
-            Integer switchAction,
-            long xVersion,
-            long yVersion,
-            long relativeVersion,
-            long stateVersion) {
-        ActionInfoEditor(
+        private TileInfo(Tile a, Tile b, boolean flipped) {
+            this.a = a;
+            this.b = b;
+            this.flipped = flipped;
+        }
+    }
+
+    private static class ActionInfoEditor {
+        private final InputBinding input;
+        private final Action action;
+        private final ActionInfo info;
+        private final Spinner<Double> x;
+        private final Spinner<Double> y;
+        private final Checkbox relative;
+        private final Spinner<Integer> state;
+        private final Integer switchAction;
+        private final long xVersion;
+        private final long yVersion;
+        private final long relativeVersion;
+        private final long stateVersion;
+        private ActionInfoEditor(
                 InputBinding input,
                 Action action,
                 ActionInfo info,
@@ -130,21 +143,21 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                 Spinner<Double> y,
                 Checkbox relative,
                 Spinner<Integer> state) {
-            this(input,
-                    action,
-                    info,
-                    x,
-                    y,
-                    relative,
-                    state,
-                    null,
-                    x.getModel().getVersion(),
-                    y.getModel().getVersion(),
-                    relative.getModel().getVersion(),
-                    state.getModel().getVersion());
+            this.input = input;
+            this.action = action;
+            this.info = info;
+            this.x = x;
+            this.y = y;
+            this.relative = relative;
+            this.state = state;
+            this.switchAction = null;
+            this.xVersion = x.getModel().getVersion();
+            this.yVersion = y.getModel().getVersion();
+            this.relativeVersion = relative.getModel().getVersion();
+            this.stateVersion = state.getModel().getVersion();
         }
 
-        ActionInfoEditor(
+        private ActionInfoEditor(
                 Integer switchAction,
                 Action action,
                 ActionInfo info,
@@ -152,18 +165,18 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                 Spinner<Double> y,
                 Checkbox relative,
                 Spinner<Integer> state) {
-            this(null,
-                    action,
-                    info,
-                    x,
-                    y,
-                    relative,
-                    state,
-                    switchAction,
-                    x.getModel().getVersion(),
-                    y.getModel().getVersion(),
-                    relative.getModel().getVersion(),
-                    state.getModel().getVersion());
+            this.input = null;
+            this.switchAction = switchAction;
+            this.action = action;
+            this.info = info;
+            this.x = x;
+            this.y = y;
+            this.relative = relative;
+            this.state = state;
+            this.xVersion = x.getModel().getVersion();
+            this.yVersion = y.getModel().getVersion();
+            this.relativeVersion = relative.getModel().getVersion();
+            this.stateVersion = state.getModel().getVersion();
         }
 
         private <T> boolean getChange(Spinner<T> spinner, long version) {
@@ -178,7 +191,13 @@ public class MapEditorState extends TypedBaseAppState<Application> {
         }
 
         ActionInfo getUpdatedInfo() {
-            return new ActionInfo(x.getValue().intValue(), y.getValue().intValue(), relative.isChecked(), state.getValue(), null, info.getTileChangeSide());
+            return new ActionInfo(
+                    x.getValue().intValue(),
+                    y.getValue().intValue(),
+                    relative.isChecked(),
+                    state.getValue(),
+                    null,
+                    info.getTileChangeSide());
         }
 
         @Override
@@ -247,19 +266,19 @@ public class MapEditorState extends TypedBaseAppState<Application> {
         txtLevelName.setPreferredWidth(150f);
         btnLoadLevel = new Button("Load");
         btnLoadLevel.addClickCommand(btn -> {
-            if (txtLevelName.getText() != null && !txtLevelName.getText().isBlank()) {
+            if (txtLevelName.getText() != null && !txtLevelName.getText().isEmpty()) {
                 loadLevel(txtLevelName.getText());
             }
         });
         btnSaveLevel = new Button("Save");
         btnSaveLevel.addClickCommand(btn -> {
-            if (txtLevelName.getText() != null && !txtLevelName.getText().isBlank()) {
+            if (txtLevelName.getText() != null && !txtLevelName.getText().isEmpty()) {
                 saveLevel(txtLevelName.getText());
             }
         });
         btnNewLevel = new Button("New");
         btnNewLevel.addClickCommand(btn -> {
-            level = new Level("", 0, 0, List.of(), List.of(), new BitSet(), Map.of(), Map.of());
+            level = new Level("", 0, 0, Collections.emptyList(), Collections.emptyList(), new BitSet(), Collections.emptyMap(), Collections.emptyMap());
             txtLevelName.setText("");
             syncLevel(false);
         });
@@ -288,7 +307,7 @@ public class MapEditorState extends TypedBaseAppState<Application> {
         btnFlip.addClickCommand(btn -> {
             List<ActionInfo> flips = IntStream.range(0, level.getMap().size())
                     .mapToObj(i -> new ActionInfo(i % level.getWidth(), i / level.getWidth(), false, 2, null, 0))
-                    .toList();
+                    .collect(Collectors.toList());
             appStateManager.getState(MapRendererState.class).update(new Action(flips));
         });
         gui.addChild(btnFlip);
@@ -372,10 +391,10 @@ public class MapEditorState extends TypedBaseAppState<Application> {
         buttons.addChild(btnRemove);
         c.addChild(buttons);
 
-        List<Action> inputActions = level == null ? List.of() : level.getActions().get(inputBinding.ordinal());
+        List<Action> inputActions = level == null ? Collections.emptyList() : level.getActions().get(inputBinding.ordinal());
         ListBox<Action> listActions = new ListBox<>(
                 VersionedList.wrap(inputActions),
-                new DefaultCellRenderer<>() {
+                new DefaultCellRenderer<Action>() {
                     private final Map<Action, Panel> panels = new HashMap<>();
 
                     @Override
@@ -391,7 +410,7 @@ public class MapEditorState extends TypedBaseAppState<Application> {
 
                             ListBox<ActionInfo> listActionInfo = new ListBox<>(
                                     VersionedList.wrap(v.getActions()),
-                                    new DefaultCellRenderer<>() {
+                                    new DefaultCellRenderer<ActionInfo>() {
                                         private final Map<ActionInfo, Panel> panels = new HashMap<>();
 
                                         @Override
@@ -410,13 +429,15 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                                                 chkRelative.setChecked(v.isRelative());
 
                                                 Spinner<Integer> numState = new Spinner<>(
-                                                        new SequenceModels.ListSequence<>(List.of(-1, 0, 1, 2), v.getStateChange()),
-                                                        new DefaultValueRenderer<>(i -> switch (i) {
-                                                            case -1 -> "Down";
-                                                            case 0 -> "None";
-                                                            case 1 -> "Up";
-                                                            case 2 -> "Flip";
-                                                            default -> "???";
+                                                        new SequenceModels.ListSequence<>(Arrays.asList(-1, 0, 1, 2), v.getStateChange()),
+                                                        new DefaultValueRenderer<>(i -> {
+                                                            switch (i) {
+                                                                case -1: return "Down";
+                                                                case 0: return "None";
+                                                                case 1: return "Up";
+                                                                case 2: return "Flip";
+                                                                default: return "???";
+                                                            }
                                                         }));
                                                 editorActions.add(new ActionInfoEditor(
                                                         inputBinding,
@@ -488,11 +509,11 @@ public class MapEditorState extends TypedBaseAppState<Application> {
         Button btnGenerate = new Button("Generate");
         c.addChild(btnGenerate);
 
-        Map<Integer, Action> switchMap = level == null ? Map.of() : level.getSwitchActions();
+        Map<Integer, Action> switchMap = level == null ? Collections.emptyMap() : level.getSwitchActions();
         List<Action> actionsCopy = new ArrayList<>(switchMap.values());
         ListBox<Action> listActions = new ListBox<>(
                 VersionedList.wrap(actionsCopy),
-                new DefaultCellRenderer<>() {
+                new DefaultCellRenderer<Action>() {
                     private final Map<Action, Panel> panels = new HashMap<>();
 
                     @Override
@@ -508,7 +529,7 @@ public class MapEditorState extends TypedBaseAppState<Application> {
 
                             ListBox<ActionInfo> listActionInfo = new ListBox<>(
                                     VersionedList.wrap(v.getActions()),
-                                    new DefaultCellRenderer<>() {
+                                    new DefaultCellRenderer<ActionInfo>() {
                                         private final Map<ActionInfo, Panel> panels = new HashMap<>();
 
                                         @Override
@@ -527,13 +548,15 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                                                 chkRelative.setChecked(v.isRelative());
 
                                                 Spinner<Integer> numState = new Spinner<>(
-                                                        new SequenceModels.ListSequence<>(List.of(-1, 0, 1, 2), v.getStateChange()),
-                                                        new DefaultValueRenderer<>(i -> switch (i) {
-                                                            case -1 -> "Down";
-                                                            case 0 -> "None";
-                                                            case 1 -> "Up";
-                                                            case 2 -> "Flip";
-                                                            default -> "???";
+                                                        new SequenceModels.ListSequence<>(Arrays.asList(-1, 0, 1, 2), v.getStateChange()),
+                                                        new DefaultValueRenderer<>(i -> {
+                                                            switch (i) {
+                                                                case -1: return "Down";
+                                                                case 0: return "None";
+                                                                case 1: return "Up";
+                                                                case 2: return "Flip";
+                                                                default: return "???";
+                                                            }
                                                         }));
                                                 editorActions.add(new ActionInfoEditor(
                                                         switchMap.entrySet()
@@ -781,8 +804,8 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                 map1,
                 map2,
                 state,
-                level == null ? Map.of() : level.getActions(),
-                level == null ? Map.of() : level.getSwitchActions());
+                level == null ? Collections.emptyMap() : level.getActions(),
+                level == null ? Collections.emptyMap() : level.getSwitchActions());
         syncLevel(true);
     }
 

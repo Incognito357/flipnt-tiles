@@ -15,13 +15,14 @@ public class GlobalMaterials {
     private GlobalMaterials() {}
 
     private static final Map<String, Material> mats = new HashMap<>();
-    private static final Map<String, ColorRGBA> colors = Map.of(
-            Tile.EMPTY.name(), ColorRGBA.BlackNoAlpha,
-            Tile.WALL.name(), ColorRGBA.fromRGBA255(16, 16, 16, 255),
-            Tile.FLOOR.name(), ColorRGBA.fromRGBA255(239, 239, 239, 255),
-            Tile.START.name(), ColorRGBA.Cyan,
-            Tile.EXIT.name(), ColorRGBA.Green,
-            Tile.BUTTON.name(), ColorRGBA.Orange.mult(0.35f));
+    private static final Map<String, ColorRGBA> colors = new Builder<>(new HashMap<String, ColorRGBA>())
+            .with(Map::put, Tile.EMPTY.name(), ColorRGBA.BlackNoAlpha)
+            .with(Map::put, Tile.WALL.name(), ColorRGBA.fromRGBA255(16, 16, 16, 255))
+            .with(Map::put, Tile.FLOOR.name(), ColorRGBA.fromRGBA255(239, 239, 239, 255))
+            .with(Map::put, Tile.START.name(), ColorRGBA.Cyan)
+            .with(Map::put, Tile.EXIT.name(), ColorRGBA.Green)
+            .with(Map::put, Tile.BUTTON.name(), ColorRGBA.Orange.mult(0.35f))
+            .build();
 
     public static Material getTileMaterial(Tile tile) {
         return mats.computeIfAbsent(tile.name(), GlobalMaterials::createMaterial);

@@ -12,6 +12,8 @@ import com.jme3.math.ColorRGBA;
 import com.jme3.scene.Node;
 import com.jme3.system.AppSettings;
 
+import java.util.AbstractMap;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -41,13 +43,13 @@ public class MainMenuState extends TypedBaseAppState<Application> {
 
         appStateManager.getState(BackgroundRendererState.class).setBackgroundState(initialState, 1.0f);
 
-        menu = new MenuList(app.getFontOutline(), ColorRGBA.LightGray, ColorRGBA.DarkGray, 50f, BitmapFont.Align.Center, List.of(
-                Map.entry("START", () -> {
+        menu = new MenuList(app.getFontOutline(), ColorRGBA.LightGray, ColorRGBA.DarkGray, 50f, BitmapFont.Align.Center, Arrays.asList(
+                new AbstractMap.SimpleEntry<>("START", () -> {
                     appStateManager.detach(this);
                     appStateManager.attach(new GameState());
                 }),
-                Map.entry("OPTIONS", () -> {}),
-                Map.entry("EXIT", app::stop)));
+                new AbstractMap.SimpleEntry<>("OPTIONS", () -> {}),
+                new AbstractMap.SimpleEntry<>("EXIT", app::stop)));
 
         menu.setLocalTranslation(settings.getWidth() / 2f - menu.getWidth() / 2f, settings.getHeight() / 2f + menu.getHeight() / 2f, 0);
         menu.initialize(inputManager);

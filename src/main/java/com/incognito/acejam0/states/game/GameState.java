@@ -31,6 +31,8 @@ import com.simsilica.lemur.anim.SpatialTweens;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.AbstractMap;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -47,28 +49,13 @@ public class GameState extends TypedBaseAppState<Application> {
     private BitmapText levelMessage;
 
     private boolean menuOpen = false;
-    private List<String> levels;
-    private int currentLevel = 0;
-
     private final ActionListener menuListener = (name, isPressed, tpf) -> {
         if (isPressed) {
             toggleMenu();
         }
     };
-
-    private final ActionListener nextLevelListener = (name, isPressed, tpf) -> {
-        if (isPressed && !menuOpen) {
-            appStateManager.detach(appStateManager.getState(MapRendererState.class));
-            appStateManager.detach(appStateManager.getState(PlayerState.class));
-            currentLevel++;
-            if (currentLevel >= levels.size()) {
-                appStateManager.detach(appStateManager.getState(GameState.class));
-                appStateManager.attach(new MainMenuState(BackgroundRendererState.BgState.RAINBOW));
-            } else {
-                startLevel();
-            }
-        }
-    };
+    private List<String> levels;
+    private int currentLevel = 0;
 
     private void toggleMenu() {
         Vector3f offset = new Vector3f(menu.getWidth() + 60f, 0f, 0f);
@@ -97,7 +84,19 @@ public class GameState extends TypedBaseAppState<Application> {
                 mat.setColor("Color", lerped);
             }
         });
-    }
+    }    private final ActionListener nextLevelListener = (name, isPressed, tpf) -> {
+        if (isPressed && !menuOpen) {
+            appStateManager.detach(appStateManager.getState(MapRendererState.class));
+            appStateManager.detach(appStateManager.getState(PlayerState.class));
+            currentLevel++;
+            if (currentLevel >= levels.size()) {
+                appStateManager.detach(appStateManager.getState(GameState.class));
+                appStateManager.attach(new MainMenuState(BackgroundRendererState.BgState.RAINBOW));
+            } else {
+                startLevel();
+            }
+        }
+    };
 
     @Override
     protected void onInitialize(Application app) {
@@ -113,18 +112,17 @@ public class GameState extends TypedBaseAppState<Application> {
         label.setLocalTranslation(30f, -10f, 0f);
         menuNode.attachChild(label);
 
-        menu = new MenuList(app.getFontOutline(), ColorRGBA.LightGray, ColorRGBA.DarkGray, 35f, BitmapFont.Align.Left, List.of(
-                Map.entry("OPTIONS", () -> {
-                }),
-                Map.entry("RESTART", () -> {
+        menu = new MenuList(app.getFontOutline(), ColorRGBA.LightGray, ColorRGBA.DarkGray, 35f, BitmapFont.Align.Left, Arrays.asList(
+                new AbstractMap.SimpleEntry<>("OPTIONS", () -> {}),
+                new AbstractMap.SimpleEntry<>("RESTART", () -> {
                     appStateManager.getState(PlayerState.class).restartLevel();
                     toggleMenu();
                 }),
-                Map.entry("MAIN MENU", () -> {
+                new AbstractMap.SimpleEntry<>("MAIN MENU", () -> {
                     appStateManager.detach(this);
                     appStateManager.attach(new MainMenuState());
                 }),
-                Map.entry("EXIT GAME", app::stop)));
+                new AbstractMap.SimpleEntry<>("EXIT GAME", app::stop)));
         menu.initialize(inputManager);
 
         menuNode.attachChild(menu);
@@ -156,7 +154,7 @@ public class GameState extends TypedBaseAppState<Application> {
         levelMessage.setVerticalAlignment(BitmapFont.VAlign.Center);
         guiNode.attachChild(levelMessage);
 
-        levels = FileLoader.readFile("levels.json", new TypeReference<>() {});
+        levels = FileLoader.readFile("levels.json", new TypeReference<List<String>>() {});
         if (levels == null || levels.isEmpty()) {
             logger.error("No levels found");
             return;
@@ -204,4 +202,6 @@ public class GameState extends TypedBaseAppState<Application> {
             menu.update();
         }
     }
+
+
 }

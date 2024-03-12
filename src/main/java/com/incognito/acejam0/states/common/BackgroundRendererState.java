@@ -12,7 +12,9 @@ import com.jme3.scene.shape.CenterQuad;
 import com.jme3.system.AppSettings;
 import com.simsilica.lemur.anim.AbstractTween;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class BackgroundRendererState extends TypedBaseAppState<Application> {
@@ -97,7 +99,7 @@ public class BackgroundRendererState extends TypedBaseAppState<Application> {
         });
         if (target == BgState.RAINBOW) {
             //green last, to blend nicer from level complete
-            List<ColorRGBA> colors = List.of(ColorRGBA.Blue, ColorRGBA.Magenta, ColorRGBA.Red, ColorRGBA.Orange, ColorRGBA.Yellow, ColorRGBA.Green);
+            List<ColorRGBA> colors = Arrays.asList(ColorRGBA.Blue, ColorRGBA.Magenta, ColorRGBA.Red, ColorRGBA.Orange, ColorRGBA.Yellow, ColorRGBA.Green);
             TweenUtil.addLoop(background, () -> IntStream.range(0, colors.size())
                     .mapToObj(i -> new AbstractTween(2.0f) {
                         private final ColorRGBA origin = i == 0 ? colors.get(colors.size() - 1) : colors.get(i - 1);
@@ -108,7 +110,7 @@ public class BackgroundRendererState extends TypedBaseAppState<Application> {
                             mat.setColor("Color", new ColorRGBA().interpolateLocal(origin, target, (float) t));
                         }
                     })
-                    .toList());
+                    .collect(Collectors.toList()));
         }
     }
 }

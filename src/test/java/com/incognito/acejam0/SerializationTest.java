@@ -9,7 +9,9 @@ import com.incognito.acejam0.utils.Builder;
 import com.incognito.acejam0.utils.Mapper;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,14 +43,17 @@ class SerializationTest {
     @Test
     void testLevelSerialization() throws JsonProcessingException {
         Level level = new Level("TITLE", 2, 3,
-                List.of(Tile.START, Tile.FLOOR, Tile.WALL, Tile.EXIT, Tile.EMPTY, Tile.BUTTON),
+                Arrays.asList(Tile.START, Tile.FLOOR, Tile.WALL, Tile.EXIT, Tile.EMPTY, Tile.BUTTON),
                 null,
                 new Builder<>(new BitSet(6)).with(BitSet::set, 3).with(BitSet::set, 12).build(),
-                new LinkedHashMap<>(Map.of(
-                        0, List.of(new Action(List.of(new ActionInfo(0, 1, false, -1, null, 0)))),
-                        1, List.of(new Action(List.of(new ActionInfo(0, 1, true, 0, Tile.WALL, 1), new ActionInfo(1, 0, false, 1, Tile.START, 2))))
-                )),
-                new LinkedHashMap<>(Map.of(0, new Action(List.of(new ActionInfo(5, 4, true, 1, Tile.WALL, -1))))));
+                new Builder<>(new LinkedHashMap<Integer, List<Action>>())
+                        .with(Map::put, 0, Collections.singletonList(new Action(Collections.singletonList(new ActionInfo(0, 1, false, -1, null, 0)))))
+                        .with(Map::put, 1, Collections.singletonList(new Action(Arrays.asList(
+                                new ActionInfo(0, 1, true, 0, Tile.WALL, 1),
+                                new ActionInfo(1, 0, false, 1, Tile.START, 2)))))
+                        .build()
+                ,
+                Collections.singletonMap(0, new Action(Collections.singletonList(new ActionInfo(5, 4, true, 1, Tile.WALL, -1)))));
         String s = Mapper.getMapper().writeValueAsString(level);
         assertEquals("{" +
                 "\"message\":\"TITLE\"," +

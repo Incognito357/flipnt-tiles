@@ -9,10 +9,12 @@ import com.jme3.input.controls.KeyTrigger;
 import com.jme3.math.ColorRGBA;
 import com.jme3.scene.Node;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 public class MenuList extends Node {
 
@@ -58,9 +60,9 @@ public class MenuList extends Node {
                     MenuItem item = new MenuItem(guiFont, kvp.getKey(), activeColor, inactiveColor, size);
                     maxWidth.accumulateAndGet(item.getLineWidth(), Float::max);
                     attachChild(item);
-                    return Map.entry(item, kvp.getValue());
+                    return new AbstractMap.SimpleEntry<>(item, kvp.getValue());
                 })
-                .toList());
+                .collect(Collectors.toList()));
         this.width = maxWidth.get();
         this.height = items.size() * (this.items.get(0).getKey().getLineHeight() + 5f);
         List<Map.Entry<MenuItem, Runnable>> entries = this.items;

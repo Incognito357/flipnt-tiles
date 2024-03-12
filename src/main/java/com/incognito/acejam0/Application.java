@@ -34,10 +34,8 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.BitSet;
-import java.util.List;
+import java.util.Collections;
 import java.util.Map;
 
 public class Application extends SimpleApplication {
@@ -67,7 +65,7 @@ public class Application extends SimpleApplication {
         } else {
             app.getStateManager().attachAll(
                     new MapEditorState(),
-                    new MapRendererState(new Level("", 0, 0, List.of(), List.of(), new BitSet(), Map.of(), Map.of())));
+                    new MapRendererState(new Level("", 0, 0, Collections.emptyList(), Collections.emptyList(), new BitSet(), Collections.emptyMap(), Collections.emptyMap())));
         }
 
         APP = app;
@@ -110,7 +108,8 @@ public class Application extends SimpleApplication {
                     URI uri = e.getURL().toURI();
                     StringBuilder sb = new StringBuilder()
                             .append("title=")
-                            .append("Crash Report - " + t.getMessage())
+                            .append("Crash Report - ")
+                            .append(t.getMessage())
                             .append("&body=")
                             .append("[Add description here]\n```\n")
                             .append(sw)

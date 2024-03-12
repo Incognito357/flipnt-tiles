@@ -9,6 +9,7 @@ import com.incognito.acejam0.domain.Tile;
 import com.incognito.acejam0.states.common.BackgroundRendererState;
 import com.incognito.acejam0.states.common.BackgroundRendererState.BgState;
 import com.incognito.acejam0.states.common.TypedBaseAppState;
+import com.incognito.acejam0.utils.Builder;
 import com.incognito.acejam0.utils.GlobalMaterials;
 import com.incognito.acejam0.utils.TweenUtil;
 import com.jme3.app.state.AppStateManager;
@@ -31,8 +32,11 @@ import com.simsilica.lemur.anim.SpatialTweens;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -57,47 +61,48 @@ public class PlayerState extends TypedBaseAppState<Application> {
     private final List<Runnable> completedListeners = new ArrayList<>();
     private boolean completed = false;
 
-    private final Map<InputBinding, ActionListener> listeners = Map.of(
-            InputBinding.UP, (name, isPressed, tpf) -> {
+    private final Map<InputBinding, ActionListener> listeners = new Builder<>(new HashMap<InputBinding, ActionListener>())
+            .with(Map::put, InputBinding.UP, (ActionListener)(name, isPressed, tpf) -> {
                 if (isPressed) {
                     Map<Spatial, Vector3f> moved = move(0, -1);
                     if (!moved.isEmpty()) {
                         doAction(InputBinding.UP, moved);
                     }
                 }
-            },
-            InputBinding.DOWN, (name, isPressed, tpf) -> {
+            })
+            .with(Map::put, InputBinding.DOWN, (ActionListener)(name, isPressed, tpf) -> {
                 if (isPressed) {
                     Map<Spatial, Vector3f> moved = move(0, 1);
                     if (!moved.isEmpty()) {
                         doAction(InputBinding.DOWN, moved);
                     }
                 }
-            },
-            InputBinding.LEFT, (name, isPressed, tpf) -> {
+            })
+            .with(Map::put, InputBinding.LEFT, (ActionListener)(name, isPressed, tpf) -> {
                 if (isPressed) {
                     Map<Spatial, Vector3f> moved = move(-1, 0);
                     if (!moved.isEmpty()) {
                         doAction(InputBinding.LEFT, moved);
                     }
                 }
-            },
-            InputBinding.RIGHT, (name, isPressed, tpf) -> {
+            })
+            .with(Map::put, InputBinding.RIGHT, (ActionListener)(name, isPressed, tpf) -> {
                 if (isPressed) {
                     Map<Spatial, Vector3f> moved = move(1, 0);
                     if (!moved.isEmpty()) {
                         doAction(InputBinding.RIGHT, moved);
                     }
                 }
-            });
+            })
+            .build();
 
     private final ActionListener flipListener = (name, isPressed, tpf) -> {
         if (isPressed) {
             List<ActionInfo> flips = IntStream.range(0, level.getMap().size())
                     .mapToObj(i -> new ActionInfo(i % level.getWidth(), i / level.getWidth(), false, 2, null, 0))
-                    .toList();
+                    .collect(Collectors.toList());
 
-            updateState(new Action(flips), Set.of());
+            updateState(new Action(flips), Collections.emptySet());
 
             if (!completed) {
                 appStateManager.getState(BackgroundRendererState.class)
@@ -129,7 +134,7 @@ public class PlayerState extends TypedBaseAppState<Application> {
 
     private void doAction(InputBinding dir, Map<Spatial, Vector3f> moved) {
         AtomicInteger state = actionStates.computeIfAbsent(dir, d -> new AtomicInteger(0));
-        List<Action> actions = level.getActions().getOrDefault(dir.ordinal(), List.of());
+        List<Action> actions = level.getActions().getOrDefault(dir.ordinal(), Collections.emptyList());
         if (!actions.isEmpty() && state.get() < actions.size() && state.get() >= 0) {
             updateState(actions.get(state.getAndIncrement()), moved.values());
 
@@ -163,10 +168,10 @@ public class PlayerState extends TypedBaseAppState<Application> {
                                 }
                                 return new ActionInfo(a.getX(), a.getY(), a.isRelative(), a.getStateChange(), a.getTileChange(), side);
                             })
-                            .toList());
-                    updateState(newAction, List.of(value));
+                            .collect(Collectors.toList()));
+                    updateState(newAction, Arrays.asList(value));
                 } else {
-                    updateState(action, List.of(value));
+                    updateState(action, Arrays.asList(value));
                 }
             }
         });
@@ -251,9 +256,11 @@ public class PlayerState extends TypedBaseAppState<Application> {
                             .filter(v -> v.x >= 0 && v.y >= 0 && v.x < level.getWidth() && v.y < level.getHeight())
                             .map(v -> new ActionInfo((int) v.x, (int) v.y, false, a.getStateChange(), a.getTileChange(), a.getTileChangeSide()));
                 })
-                .toList();
+                .collect(Collectors.toList());
         if (!relativeActions.isEmpty()) {
-            ArrayList<ActionInfo> newActions = new ArrayList<>(action.getActions().stream().filter(Predicate.not(ActionInfo::isRelative)).toList());
+            ArrayList<ActionInfo> newActions = action.getActions().stream()
+                    .filter(a -> !a.isRelative())
+                    .collect(Collectors.toCollection(ArrayList::new));
             newActions.addAll(relativeActions);
             action = new Action(newActions);
         }
@@ -398,7 +405,7 @@ public class PlayerState extends TypedBaseAppState<Application> {
         g.setMaterial(mat);
         g.rotate(FastMath.HALF_PI, 0, 0);
         g.setLocalTranslation(x, -y, z);
-        players.add(Map.entry(g, new Vector3f(x, y, z)));
+        players.add(new AbstractMap.SimpleEntry<>(g, new Vector3f(x, y, z)));
         playersNode.attachChild(g);
     }
 
