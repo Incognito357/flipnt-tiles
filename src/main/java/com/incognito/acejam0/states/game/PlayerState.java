@@ -248,6 +248,7 @@ public class PlayerState extends TypedBaseAppState<Application> {
                     return moved.stream()
                             .distinct()
                             .map(v -> v.add(offset.x, offset.y, 0f))
+                            .filter(v -> v.x >= 0 && v.y >= 0 && v.x < level.getWidth() && v.y < level.getHeight())
                             .map(v -> new ActionInfo((int) v.x, (int) v.y, false, a.getStateChange(), a.getTileChange(), a.getTileChangeSide()));
                 })
                 .toList();
