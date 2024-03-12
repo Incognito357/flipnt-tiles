@@ -8,6 +8,8 @@ import com.incognito.acejam0.states.game.MapEditorState;
 import com.incognito.acejam0.states.game.MapRendererState;
 import com.incognito.acejam0.states.menu.MainMenuState;
 import com.incognito.acejam0.utils.Builder;
+import com.jme3.app.DebugKeysAppState;
+import com.jme3.app.FlyCamAppState;
 import com.jme3.app.SimpleApplication;
 import com.jme3.font.BitmapFont;
 import com.jme3.system.AppSettings;
@@ -24,7 +26,7 @@ import java.util.logging.Logger;
 public class Application extends SimpleApplication {
     public static Application APP;
 
-    private static final boolean EDIT_MODE = false;
+    private static final boolean EDIT_MODE = true;
 
     private BitmapFont font;
     private BitmapFont fontOutline;
@@ -59,19 +61,21 @@ public class Application extends SimpleApplication {
 
     @Override
     public void simpleInitApp() {
-        font = getAssetManager().loadFont("font/book_antiqua.fnt");
-        fontOutline = getAssetManager().loadFont("font/book_antiqua_outline.fnt");
+        font = assetManager.loadFont("font/book_antiqua.fnt");
+        fontOutline = assetManager.loadFont("font/book_antiqua_outline.fnt");
 
         GuiGlobals.initialize(this);
         GuiGlobals.getInstance().setCursorEventsEnabled(false);
         BaseStyles.loadGlassStyle();
         GuiGlobals.getInstance().getStyles().setDefaultStyle("glass");
 
-        flyCam.setEnabled(false);
         cam.setParallelProjection(true);
 
+        stateManager.detach(stateManager.getState(FlyCamAppState.class));
+        stateManager.detach(stateManager.getState(DebugKeysAppState.class));
+
         if (!EDIT_MODE) {
-            getInputManager().deleteMapping(INPUT_MAPPING_EXIT);
+            inputManager.deleteMapping(INPUT_MAPPING_EXIT);
         }
     }
 

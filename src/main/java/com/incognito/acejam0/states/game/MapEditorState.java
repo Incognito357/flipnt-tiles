@@ -77,9 +77,10 @@ public class MapEditorState extends TypedBaseAppState<Application> {
     private Node guiNode;
 
     private Container gui;
-    private TextField txtLevelName;
     private Label lblMouse;
     private Label lblTile;
+    private TextField txtMessage;
+    private long txtMessageVersion;
 
     private Container actionGui;
 
@@ -187,7 +188,7 @@ public class MapEditorState extends TypedBaseAppState<Application> {
         guiNode.attachChild(gui);
 
         Container saveLoad = new Container(new SpringGridLayout(Axis.X, Axis.Y));
-        txtLevelName = new TextField("");
+        TextField txtLevelName = new TextField("");
         txtLevelName.setPreferredWidth(150f);
         Button btnLoadLevel = new Button("Load");
         btnLoadLevel.addClickCommand(btn -> {
@@ -220,6 +221,10 @@ public class MapEditorState extends TypedBaseAppState<Application> {
         lblTile = new Label("Tile: " + selectedTile.name());
         gui.addChild(lblTile);
 
+        txtMessage = new TextField("");
+        txtMessageVersion = txtMessage.getDocumentModel().getVersion();
+        gui.addChild(txtMessage);
+
         Button btnPlay = new Button("Play");
         Button btnFlip = new Button("Flip Map");
         btnPlay.addClickCommand(btn -> {
@@ -227,6 +232,8 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                 btn.setText("Play");
                 appStateManager.detach(appStateManager.getState(PlayerState.class));
                 btnFlip.setEnabled(true);
+                btnLoadLevel.setEnabled(true);
+                btnSaveLevel.setEnabled(true);
                 level = prePlayLevel;
                 syncLevel(true);
                 appStateManager.getState(BackgroundRendererState.class)
@@ -239,6 +246,8 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                 appStateManager.attach(new PlayerState(level));
                 GuiGlobals.getInstance().releaseFocus(guiNode);
                 btnFlip.setEnabled(false);
+                btnLoadLevel.setEnabled(false);
+                btnSaveLevel.setEnabled(false);
                 prePlayLevel = Level.copy(level);
             }
             playing = !playing;
@@ -616,6 +625,12 @@ public class MapEditorState extends TypedBaseAppState<Application> {
             }
         }
         editorActions.addAll(toAdd);
+
+        long version = txtMessage.getDocumentModel().getVersion();
+        if (version != txtMessageVersion) {
+            txtMessageVersion = version;
+            updateEditorLevel();
+        }
     }
 
     private void saveLevel(String name) {
@@ -652,6 +667,7 @@ public class MapEditorState extends TypedBaseAppState<Application> {
 
             actionGui.clearChildren();
             generateActionTabs();
+            txtMessage.setText(level.getMessage());
         }
     }
 
@@ -681,7 +697,7 @@ public class MapEditorState extends TypedBaseAppState<Application> {
 
         //todo: automatically map action coordinates
         level = new Level(
-                txtLevelName.getText(),
+                txtMessage.getText(),
                 (int) size.x + 1,
                 (int) size.y + 1,
                 map1,
