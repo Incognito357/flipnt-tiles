@@ -34,15 +34,13 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
 
 public class Application extends SimpleApplication {
     private static final Logger logger = LogManager.getLogger();
-    private static final boolean EDIT_MODE = true;
+    private static final boolean EDIT_MODE = false;
     public static Application APP;
     private BitmapFont font;
     private BitmapFont fontOutline;

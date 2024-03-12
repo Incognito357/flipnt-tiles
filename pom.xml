@@ -191,6 +191,9 @@
                         <manifest>
                             <mainClass>com.incognito.acejam0.Application</mainClass>
                         </manifest>
+                        <manifestEntries>
+                            <Multi-Release>true</Multi-Release>
+                        </manifestEntries>
                     </archive>
                 </configuration>
                 <executions>

@@ -1,7 +1,6 @@
 package com.incognito.acejam0.utils;
 
 import com.jme3.font.BitmapText;
-import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
 import com.simsilica.lemur.anim.AbstractTween;
 import com.simsilica.lemur.anim.AnimationState;
@@ -43,7 +42,7 @@ public class TweenUtil {
     }
 
     public static void tweenText(BitmapText text, String message, float length, float delay) {
-        ColorRGBA origin = text.getColor();
+        ColorRGBA origin = text.getColor().clone().setAlpha(1.0f);
         ColorRGBA target = text.getColor().clone().setAlpha(0);
         boolean skipFirst = text.getText() == null || text.getText().isBlank();
         boolean skipLast = message == null || message.isBlank();
