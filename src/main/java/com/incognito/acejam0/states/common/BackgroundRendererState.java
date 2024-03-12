@@ -22,10 +22,10 @@ public class BackgroundRendererState extends TypedBaseAppState<Application> {
     private BgState currentState;
 
     public enum BgState {
-        FRONT(7.5f, 1.0f, 1.0f, ColorRGBA.Blue),
+        FRONT(7.5f, 1.0f, 10f, ColorRGBA.Blue),
         BACK(7.5f, 1.0f, 90.0f, ColorRGBA.Red.mult(0.5f)),
         COMPLETE(10.0f, 1.0f, 90.0f, ColorRGBA.Green),
-        EDITOR(7.5f, 1.0f, 1.0f, ColorRGBA.Orange),
+        EDITOR(7.5f, 1.0f, 10f, ColorRGBA.Orange),
         MENU(3.5f, 1.0f, 60.0f, ColorRGBA.DarkGray.mult(0.5f)),
         RAINBOW(30.0f, 1.0f, 110.0f, ColorRGBA.Black);
 

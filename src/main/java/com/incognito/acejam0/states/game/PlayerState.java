@@ -55,6 +55,7 @@ public class PlayerState extends TypedBaseAppState<Application> {
     private InputManager inputManager;
     private AppStateManager appStateManager;
     private final List<Runnable> completedListeners = new ArrayList<>();
+    private boolean completed = false;
 
     private final Map<InputBinding, ActionListener> listeners = Map.of(
             InputBinding.UP, (name, isPressed, tpf) -> {
@@ -98,8 +99,10 @@ public class PlayerState extends TypedBaseAppState<Application> {
 
             updateState(new Action(flips), Set.of());
 
-            appStateManager.getState(BackgroundRendererState.class)
-                    .setBackgroundState(isFlipped ? BgState.FRONT : BgState.BACK, 0.75f);
+            if (!completed) {
+                appStateManager.getState(BackgroundRendererState.class)
+                        .setBackgroundState(isFlipped ? BgState.FRONT : BgState.BACK, 0.75f);
+            }
             isFlipped = !isFlipped;
         }
     };
@@ -169,9 +172,11 @@ public class PlayerState extends TypedBaseAppState<Application> {
         });
 
         if (checkFinish()) {
+            completed = true;
             appStateManager.getState(BackgroundRendererState.class)
                     .setBackgroundState(BgState.COMPLETE, 1.0f);
             onDisable();
+            inputManager.addListener(flipListener, "flip");
             onCompleted();
         }
     }

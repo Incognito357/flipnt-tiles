@@ -73,10 +73,7 @@ public class Application extends SimpleApplication {
 
         stateManager.detach(stateManager.getState(FlyCamAppState.class));
         stateManager.detach(stateManager.getState(DebugKeysAppState.class));
-
-        if (!EDIT_MODE) {
-            inputManager.deleteMapping(INPUT_MAPPING_EXIT);
-        }
+        inputManager.deleteMapping(INPUT_MAPPING_EXIT);
     }
 
     public BitmapFont getGuiFont() {

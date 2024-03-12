@@ -77,8 +77,13 @@ public class MapEditorState extends TypedBaseAppState<Application> {
     private Node guiNode;
 
     private Container gui;
+    private Button btnLoadLevel;
+    private Button btnSaveLevel;
+    private Button btnNewLevel;
     private Label lblMouse;
     private Label lblTile;
+    private Button btnPlay;
+    private Button btnFlip;
     private TextField txtMessage;
     private long txtMessageVersion;
 
@@ -102,8 +107,7 @@ public class MapEditorState extends TypedBaseAppState<Application> {
 
     private Vector2f camOffset = Vector2f.ZERO.clone();
 
-    private record TileInfo(Tile a, Tile b, boolean flipped) {
-    }
+    private record TileInfo(Tile a, Tile b, boolean flipped) {}
 
     private record ActionInfoEditor(
             InputBinding input,
@@ -113,11 +117,11 @@ public class MapEditorState extends TypedBaseAppState<Application> {
             Spinner<Double> y,
             Checkbox relative,
             Spinner<Integer> state,
+            Integer switchAction,
             long xVersion,
             long yVersion,
             long relativeVersion,
-            long stateVersion
-    ) {
+            long stateVersion) {
         ActionInfoEditor(
                 InputBinding input,
                 Action action,
@@ -133,6 +137,29 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                     y,
                     relative,
                     state,
+                    null,
+                    x.getModel().getVersion(),
+                    y.getModel().getVersion(),
+                    relative.getModel().getVersion(),
+                    state.getModel().getVersion());
+        }
+
+        ActionInfoEditor(
+                Integer switchAction,
+                Action action,
+                ActionInfo info,
+                Spinner<Double> x,
+                Spinner<Double> y,
+                Checkbox relative,
+                Spinner<Integer> state) {
+            this(null,
+                    action,
+                    info,
+                    x,
+                    y,
+                    relative,
+                    state,
+                    switchAction,
                     x.getModel().getVersion(),
                     y.getModel().getVersion(),
                     relative.getModel().getVersion(),
@@ -152,6 +179,24 @@ public class MapEditorState extends TypedBaseAppState<Application> {
 
         ActionInfo getUpdatedInfo() {
             return new ActionInfo(x.getValue().intValue(), y.getValue().intValue(), relative.isChecked(), state.getValue(), null, info.getTileChangeSide());
+        }
+
+        @Override
+        public String toString() {
+            return "ActionInfoEditor{" +
+                    "input=" + input +
+                    ", action=" + action +
+                    ", info=" + info +
+                    ", x=" + x +
+                    ", y=" + y +
+                    ", relative=" + relative +
+                    ", state=" + state +
+                    ", switchAction=" + switchAction +
+                    ", xVersion=" + xVersion +
+                    ", yVersion=" + yVersion +
+                    ", relativeVersion=" + relativeVersion +
+                    ", stateVersion=" + stateVersion +
+                    '}';
         }
     }
 
@@ -174,6 +219,16 @@ public class MapEditorState extends TypedBaseAppState<Application> {
         lblTile.setText("Tile: " + selectedTile.name());
     };
 
+    private final ActionListener escapeListener = (name, isPressed, tpf) -> {
+        if (isPressed) {
+            if (playing) {
+                togglePlayMode();
+            } else {
+                getApplication().stop();
+            }
+        }
+    };
+
     @Override
     protected void onInitialize(Application app) {
         appStateManager = app.getStateManager();
@@ -190,19 +245,19 @@ public class MapEditorState extends TypedBaseAppState<Application> {
         Container saveLoad = new Container(new SpringGridLayout(Axis.X, Axis.Y));
         TextField txtLevelName = new TextField("");
         txtLevelName.setPreferredWidth(150f);
-        Button btnLoadLevel = new Button("Load");
+        btnLoadLevel = new Button("Load");
         btnLoadLevel.addClickCommand(btn -> {
             if (txtLevelName.getText() != null && !txtLevelName.getText().isBlank()) {
                 loadLevel(txtLevelName.getText());
             }
         });
-        Button btnSaveLevel = new Button("Save");
+        btnSaveLevel = new Button("Save");
         btnSaveLevel.addClickCommand(btn -> {
             if (txtLevelName.getText() != null && !txtLevelName.getText().isBlank()) {
                 saveLevel(txtLevelName.getText());
             }
         });
-        Button btnNewLevel = new Button("New");
+        btnNewLevel = new Button("New");
         btnNewLevel.addClickCommand(btn -> {
             level = new Level("", 0, 0, List.of(), List.of(), new BitSet(), Map.of(), Map.of());
             txtLevelName.setText("");
@@ -225,36 +280,9 @@ public class MapEditorState extends TypedBaseAppState<Application> {
         txtMessageVersion = txtMessage.getDocumentModel().getVersion();
         gui.addChild(txtMessage);
 
-        Button btnPlay = new Button("Play");
-        Button btnFlip = new Button("Flip Map");
-        btnPlay.addClickCommand(btn -> {
-            if (playing) {
-                btn.setText("Play");
-                appStateManager.detach(appStateManager.getState(PlayerState.class));
-                btnFlip.setEnabled(true);
-                btnLoadLevel.setEnabled(true);
-                btnSaveLevel.setEnabled(true);
-                level = prePlayLevel;
-                syncLevel(true);
-                appStateManager.getState(BackgroundRendererState.class)
-                        .setBackgroundState(BackgroundRendererState.BgState.EDITOR, 0.5f);
-            } else {
-                if (level == null) {
-                    return;
-                }
-                btn.setText("Editor");
-                appStateManager.attach(new PlayerState(level));
-                GuiGlobals.getInstance().releaseFocus(guiNode);
-                btnFlip.setEnabled(false);
-                btnLoadLevel.setEnabled(false);
-                btnSaveLevel.setEnabled(false);
-                prePlayLevel = Level.copy(level);
-            }
-            playing = !playing;
-            MapRendererState renderer = appStateManager.getState(MapRendererState.class);
-            renderer.setEditing(!playing);
-            renderer.reloadLevel();
-        });
+        btnPlay = new Button("Play");
+        btnFlip = new Button("Flip Map");
+        btnPlay.addClickCommand(btn -> togglePlayMode());
         gui.addChild(btnPlay);
 
         btnFlip.addClickCommand(btn -> {
@@ -285,12 +313,45 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                 });
         inputManager.addMapping("editor-click", new MouseButtonTrigger(MouseInput.BUTTON_LEFT));
         inputManager.addMapping("editor-rightclick", new MouseButtonTrigger(MouseInput.BUTTON_RIGHT));
+        inputManager.addMapping("editor-escape", new KeyTrigger(KeyInput.KEY_ESCAPE));
         inputManager.addListener(clickListener, "editor-click");
         inputManager.addListener(rightClickListener, "editor-rightclick");
+        inputManager.addListener(escapeListener, "editor-escape");
 
         appStateManager.getState(MapRendererState.class).setEditing(true);
         appStateManager.getState(BackgroundRendererState.class)
                 .setBackgroundState(BackgroundRendererState.BgState.EDITOR, 0.5f);
+    }
+
+    private void togglePlayMode() {
+        if (playing) {
+            btnPlay.setText("Play");
+            appStateManager.detach(appStateManager.getState(PlayerState.class));
+            btnFlip.setEnabled(true);
+            btnLoadLevel.setEnabled(true);
+            btnSaveLevel.setEnabled(true);
+            btnNewLevel.setEnabled(true);
+            level = prePlayLevel;
+            syncLevel(true);
+            appStateManager.getState(BackgroundRendererState.class)
+                    .setBackgroundState(BackgroundRendererState.BgState.EDITOR, 0.5f);
+        } else {
+            if (level == null) {
+                return;
+            }
+            btnPlay.setText("Editor");
+            appStateManager.attach(new PlayerState(level));
+            GuiGlobals.getInstance().releaseFocus(guiNode);
+            btnFlip.setEnabled(false);
+            btnLoadLevel.setEnabled(false);
+            btnSaveLevel.setEnabled(false);
+            btnNewLevel.setEnabled(false);
+            prePlayLevel = Level.copy(level);
+        }
+        playing = !playing;
+        MapRendererState renderer = appStateManager.getState(MapRendererState.class);
+        renderer.setEditing(!playing);
+        renderer.reloadLevel();
     }
 
     private void generateActionTabs() {
@@ -375,6 +436,7 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                                             });
                                         }
                                     }, null);
+                            listActionInfo.setVisibleItems(4);
 
                             btnAdd.addClickCommand(btn -> {
                                 ActionInfo newAction = new ActionInfo(0, 0, false, 0, null, 0);
@@ -423,8 +485,8 @@ public class MapEditorState extends TypedBaseAppState<Application> {
 
     private Panel generateButtonTab() {
         Container c = new Container(new SpringGridLayout(Axis.Y, Axis.X, FillMode.Last, FillMode.Even));
-        Button btnReload = new Button("Generate");
-        c.addChild(btnReload);
+        Button btnGenerate = new Button("Generate");
+        c.addChild(btnGenerate);
 
         Map<Integer, Action> switchMap = level == null ? Map.of() : level.getSwitchActions();
         List<Action> actionsCopy = new ArrayList<>(switchMap.values());
@@ -474,7 +536,12 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                                                             default -> "???";
                                                         }));
                                                 editorActions.add(new ActionInfoEditor(
-                                                        null,
+                                                        switchMap.entrySet()
+                                                                .stream()
+                                                                .filter(kvp -> kvp.getValue().equals(actionValue))
+                                                                .map(Map.Entry::getKey)
+                                                                .findFirst()
+                                                                .orElse(null),
                                                         actionValue,
                                                         actionInfoValue,
                                                         numX,
@@ -491,6 +558,7 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                                             });
                                         }
                                     }, null);
+                            listActionInfo.setVisibleItems(4);
 
                             btnAdd.addClickCommand(btn -> {
                                 ActionInfo newAction = new ActionInfo(0, 0, false, 0, null, 0);
@@ -510,18 +578,19 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                             });
 
                             c.addChild(listActionInfo);
-                            return new RollupPanel(String.valueOf(switchMap.entrySet()
+                            return new RollupPanel(switchMap.entrySet()
                                     .stream()
                                     .filter(kvp -> kvp.getValue().equals(actionValue))
                                     .map(Map.Entry::getKey)
+                                    .map(i -> String.format("(%d, %d)%s", (int)FastMath.abs(i) % level.getWidth(), (int)FastMath.abs(i) / level.getWidth(), i < 0 ? " (flipped)" : ""))
                                     .findFirst()
-                                    .orElse(null)), c, null);
+                                    .orElse(""), c, null);
                         });
                     }
                 }, null);
         listActions.setVisibleItems(3);
 
-        btnReload.addClickCommand(btn -> {
+        btnGenerate.addClickCommand(btn -> {
             List<Tile> map = level.getMap();
             List<Tile> map2 = level.getMap2();
             for (int i = 0; i < map.size(); i++) {
@@ -536,7 +605,7 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                 if (t2 == Tile.BUTTON) {
                     switchMap.computeIfAbsent(-i, idx -> new Action(new ArrayList<>()));
                 } else {
-                    switchMap.remove(i);
+                    switchMap.remove(-i);
                 }
             }
 
@@ -602,17 +671,22 @@ public class MapEditorState extends TypedBaseAppState<Application> {
         for (Iterator<ActionInfoEditor> iterator = editorActions.iterator(); iterator.hasNext(); ) {
             ActionInfoEditor editor = iterator.next();
             if (editor.isChanged()) {
-                InputBinding input = editor.input;
-                if (input == null) {
+                Action action;
+                if (editor.input == null && editor.switchAction == null) {
+                    logger.error("Missing ID to update editor for {}", editor);
                     continue;
+                } else if (editor.input == null) {
+                    Map<Integer, Action> switchActions = level.getSwitchActions();
+                    action = switchActions.get(editor.switchAction);
+                } else {
+                    List<Action> actions = level.getActions().get(editor.input.ordinal());
+                    int actionIndex = actions.indexOf(editor.action);
+                    if (actionIndex == -1) {
+                        iterator.remove();
+                        continue;
+                    }
+                    action = actions.get(actionIndex);
                 }
-                List<Action> actions = level.getActions().get(input.ordinal());
-                int actionIndex = actions.indexOf(editor.action);
-                if (actionIndex == -1) {
-                    iterator.remove();
-                    continue;
-                }
-                Action action = actions.get(actionIndex);
                 ActionInfo newInfo = editor.getUpdatedInfo();
                 int actionInfoIndex = action.getActions().indexOf(editor.info);
                 if (actionInfoIndex == -1) {
@@ -620,7 +694,11 @@ public class MapEditorState extends TypedBaseAppState<Application> {
                     continue;
                 }
                 action.getActions().set(actionInfoIndex, newInfo);
-                toAdd.add(new ActionInfoEditor(input, action, newInfo, editor.x, editor.y, editor.relative, editor.state));
+                if (editor.input == null) {
+                    toAdd.add(new ActionInfoEditor(editor.switchAction, action, newInfo, editor.x, editor.y, editor.relative, editor.state));
+                } else {
+                    toAdd.add(new ActionInfoEditor(editor.input, action, newInfo, editor.x, editor.y, editor.relative, editor.state));
+                }
                 iterator.remove();
             }
         }

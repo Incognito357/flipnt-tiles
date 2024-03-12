@@ -14,11 +14,8 @@ import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
 import com.jme3.math.Vector4f;
 import com.jme3.renderer.Camera;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class CameraControlsState extends TypedBaseAppState<Application> {
-    private static final Logger logger = LogManager.getLogger();
 
     private Camera camera;
     private InputManager inputManager;
@@ -26,14 +23,14 @@ public class CameraControlsState extends TypedBaseAppState<Application> {
     private Vector4f frustum;
     private final AnalogListener zoomIn = (name, value, tpf) -> {
         if (value == tpf) {
-            zoom(-1);
+            zoom(tpf * -50f);
         } else {
             zoom(-value);
         }
     };
     private final AnalogListener zoomOut = (name, value, tpf) -> {
         if (value == tpf) {
-            zoom(1);
+            zoom(tpf * 50f);
         } else {
             zoom(value);
         }
