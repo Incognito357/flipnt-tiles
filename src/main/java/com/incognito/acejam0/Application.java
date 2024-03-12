@@ -37,10 +37,11 @@ import java.net.URISyntaxException;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Properties;
 
 public class Application extends SimpleApplication {
     private static final Logger logger = LogManager.getLogger();
-    private static final boolean EDIT_MODE = true;
+    private static final boolean EDIT_MODE = false;
     public static Application APP;
     private BitmapFont font;
     private BitmapFont fontOutline;
@@ -52,9 +53,26 @@ public class Application extends SimpleApplication {
 
         Application app = new Application();
 
+        String resXProp = System.getProperty("res.x", "1440");
+        String resYProp = System.getProperty("res.y", "810");
+        String resFullProp = System.getProperty("res.full", "false");
+
+        int resX;
+        int resY;
+        boolean resFull = Boolean.parseBoolean(resFullProp);
+        try {
+            resX = Integer.parseUnsignedInt(resXProp);
+            resY = Integer.parseUnsignedInt(resYProp);
+        } catch (NumberFormatException e) {
+            logger.error("Invalid resolution ({}, {})", resXProp, resYProp);
+            resX = 1440;
+            resY = 810;
+        }
+
         app.setSettings(new Builder<>(new AppSettings(true))
                 .with(AppSettings::setTitle, "Acerola Jam 0 - Aberration")
-                .with(AppSettings::setResolution, 1440, 810)    // TODO: get from args or config file
+                .with(AppSettings::setResolution, resX, resY)
+                .with(AppSettings::setFullscreen, resFull)
                 .build());
         app.getStateManager().attachAll(new BackgroundRendererState(BgState.MENU), new AnimationState(), new CameraControlsState());
         app.setDisplayFps(false);
