@@ -49,13 +49,28 @@ public class GameState extends TypedBaseAppState<Application> {
     private BitmapText levelMessage;
 
     private boolean menuOpen = false;
+    private List<String> levels;
+    private int currentLevel = 0;
+
     private final ActionListener menuListener = (name, isPressed, tpf) -> {
         if (isPressed) {
             toggleMenu();
         }
     };
-    private List<String> levels;
-    private int currentLevel = 0;
+
+    private final ActionListener nextLevelListener = (name, isPressed, tpf) -> {
+        if (isPressed && !menuOpen) {
+            appStateManager.detach(appStateManager.getState(MapRendererState.class));
+            appStateManager.detach(appStateManager.getState(PlayerState.class));
+            currentLevel++;
+            if (currentLevel >= levels.size()) {
+                appStateManager.detach(appStateManager.getState(GameState.class));
+                appStateManager.attach(new MainMenuState(BackgroundRendererState.BgState.RAINBOW));
+            } else {
+                startLevel();
+            }
+        }
+    };
 
     private void toggleMenu() {
         Vector3f offset = new Vector3f(menu.getWidth() + 60f, 0f, 0f);
@@ -84,19 +99,7 @@ public class GameState extends TypedBaseAppState<Application> {
                 mat.setColor("Color", lerped);
             }
         });
-    }    private final ActionListener nextLevelListener = (name, isPressed, tpf) -> {
-        if (isPressed && !menuOpen) {
-            appStateManager.detach(appStateManager.getState(MapRendererState.class));
-            appStateManager.detach(appStateManager.getState(PlayerState.class));
-            currentLevel++;
-            if (currentLevel >= levels.size()) {
-                appStateManager.detach(appStateManager.getState(GameState.class));
-                appStateManager.attach(new MainMenuState(BackgroundRendererState.BgState.RAINBOW));
-            } else {
-                startLevel();
-            }
-        }
-    };
+    }
 
     @Override
     protected void onInitialize(Application app) {
