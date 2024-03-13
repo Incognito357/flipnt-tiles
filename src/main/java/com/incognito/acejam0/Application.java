@@ -46,7 +46,6 @@ public class Application extends SimpleApplication {
     public static Application APP;
     private BitmapFont font;
     private BitmapFont fontOutline;
-    private static boolean EDIT_MODE;
 
     public static void main(String[] args) {
         SLF4JBridgeHandler.removeHandlersForRootLogger();
@@ -63,7 +62,7 @@ public class Application extends SimpleApplication {
         int resX;
         int resY;
         boolean resFull = Boolean.parseBoolean(resFullProp);
-        EDIT_MODE = Boolean.parseBoolean(editProp);
+        boolean editMode = Boolean.parseBoolean(editProp);
         try {
             resX = Integer.parseUnsignedInt(resXProp);
             resY = Integer.parseUnsignedInt(resYProp);
@@ -83,7 +82,7 @@ public class Application extends SimpleApplication {
         app.setDisplayFps(false);
         app.setDisplayStatView(false);
 
-        if (!EDIT_MODE) {
+        if (!editMode) {
             app.getStateManager().attach(new MainMenuState());
         } else {
             app.getStateManager().attachAll(
