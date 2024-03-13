@@ -9,6 +9,7 @@ import com.incognito.acejam0.domain.Tile;
 import com.incognito.acejam0.states.common.BackgroundRendererState;
 import com.incognito.acejam0.states.common.BackgroundRendererState.BgState;
 import com.incognito.acejam0.states.common.TypedBaseAppState;
+import com.incognito.acejam0.utils.AudioUtil;
 import com.incognito.acejam0.utils.GlobalMaterials;
 import com.incognito.acejam0.utils.TweenUtil;
 import com.jme3.app.state.AppStateManager;
@@ -298,6 +299,8 @@ public class PlayerState extends TypedBaseAppState<Application> {
             TweenUtil.addAnimation(kvp.getKey(), () -> SpatialTweens.move(
                     kvp.getKey(), null, kvp.getKey().getLocalTranslation().add(dx, -dy, 0), 0.25f));
             moved.put(kvp.getKey(), p);
+
+            AudioUtil.playPing(p);
         }
         return moved;
     }
