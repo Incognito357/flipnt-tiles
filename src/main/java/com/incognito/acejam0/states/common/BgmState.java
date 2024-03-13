@@ -36,7 +36,7 @@ public class BgmState extends TypedBaseAppState<Application> {
             long now = System.nanoTime();
             if (stoppedAt == -1) {
                 stoppedAt = now;
-            } else if (Duration.ofNanos(now - stoppedAt).minusSeconds(30).isPositive()) {
+            } else if (!Duration.ofNanos(now - stoppedAt).minusSeconds(30).isNegative()) {
                 stoppedAt = -1;
                 bgm.play();
             }
