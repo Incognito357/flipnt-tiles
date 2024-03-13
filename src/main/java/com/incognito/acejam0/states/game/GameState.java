@@ -50,7 +50,11 @@ public class GameState extends TypedBaseAppState<Application> {
 
     private boolean menuOpen = false;
     private List<String> levels;
-    private int currentLevel = 0;
+    private static int currentLevel = 0;
+
+    public static boolean inProgress() {
+        return currentLevel != 0;
+    }
 
     private final ActionListener menuListener = (name, isPressed, tpf) -> {
         if (isPressed) {
@@ -66,6 +70,7 @@ public class GameState extends TypedBaseAppState<Application> {
             if (currentLevel >= levels.size()) {
                 appStateManager.detach(appStateManager.getState(GameState.class));
                 appStateManager.attach(new MainMenuState(BackgroundRendererState.BgState.RAINBOW));
+                currentLevel = 0;
             } else {
                 startLevel();
             }
