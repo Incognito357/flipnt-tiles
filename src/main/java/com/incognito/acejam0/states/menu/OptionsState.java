@@ -129,8 +129,20 @@ public class OptionsState extends TypedBaseAppState<Application> {
         btnApply.setTextHAlignment(HAlignment.Center);
         btnApply.setTextVAlignment(VAlignment.Center);
         btnApply.addClickCommand(btn -> {
-            int x = Integer.parseUnsignedInt(txtX.getText());
-            int y = Integer.parseUnsignedInt(txtY.getText());
+            int x;
+            int y;
+            try {
+                x = Integer.parseUnsignedInt(txtX.getText());
+            } catch (NumberFormatException e) {
+                txtX.setText(String.valueOf(settings.getWidth()));
+                return;
+            }
+            try {
+                y = Integer.parseUnsignedInt(txtY.getText());
+            } catch (NumberFormatException e) {
+                txtY.setText(String.valueOf(settings.getHeight()));
+                return;
+            }
             boolean f = chkFull.isChecked();
             if (settings.getWidth() != x || settings.getHeight() != y || settings.isFullscreen() != f) {
                 settings.setResolution(x, y);

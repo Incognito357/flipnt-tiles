@@ -1,9 +1,9 @@
 package com.incognito.acejam0;
 
 import com.incognito.acejam0.domain.Level;
-import com.incognito.acejam0.states.common.BgmState;
 import com.incognito.acejam0.states.common.BackgroundRendererState;
 import com.incognito.acejam0.states.common.BackgroundRendererState.BgState;
+import com.incognito.acejam0.states.common.BgmState;
 import com.incognito.acejam0.states.common.CameraControlsState;
 import com.incognito.acejam0.states.common.TypedBaseAppState;
 import com.incognito.acejam0.states.game.MapEditorState;
@@ -11,6 +11,7 @@ import com.incognito.acejam0.states.game.MapRendererState;
 import com.incognito.acejam0.states.menu.MainMenuState;
 import com.incognito.acejam0.utils.AudioUtil;
 import com.incognito.acejam0.utils.Builder;
+import com.incognito.acejam0.utils.FileLoader;
 import com.jme3.app.DebugKeysAppState;
 import com.jme3.app.FlyCamAppState;
 import com.jme3.app.SimpleApplication;
@@ -77,6 +78,7 @@ public class Application extends SimpleApplication {
                 .with(AppSettings::setResolution, resX, resY)
                 .with(AppSettings::setFullscreen, resFull)
                 .with(AppSettings::setResizable, true)
+                .with(AppSettings::setIcons, new Object[]{FileLoader.getImage("icons/icon.png")})
                 .build());
         app.getStateManager().attachAll(new BackgroundRendererState(BgState.MENU), new AnimationState(), new CameraControlsState(), new BgmState());
         app.setDisplayFps(false);

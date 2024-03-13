@@ -42,7 +42,7 @@ public class MainMenuState extends TypedBaseAppState<Application> {
         appStateManager.getState(BackgroundRendererState.class).setBackgroundState(initialState, 1.0f);
 
         menu = new MenuList(app.getFontOutline(), ColorRGBA.LightGray, ColorRGBA.DarkGray, 50f, BitmapFont.Align.Center, List.of(
-                Map.entry("START", () -> {
+                Map.entry(GameState.inProgress() ? "CONTINUE" : "START", () -> {
                     appStateManager.detach(this);
                     appStateManager.attach(new GameState());
                 }),
