@@ -41,18 +41,23 @@ public class AudioUtil {
 
         public void toggleMute() {
             muted = !muted;
-            nodes.forEach(a -> a.setVolume(muted ? 0f : original * scale));
+            nodes.forEach(a -> a.setVolume(getActualVolume()));
         }
 
         public void setVolume(float volume) {
             original = volume;
-            if (!muted) {
-                nodes.forEach(a -> a.setVolume(volume * scale));
-            }
+            nodes.forEach(a -> a.setVolume(volume * scale));
         }
 
         public float getVolume() {
             return original;
+        }
+
+        private float getActualVolume() {
+            if (muted) {
+                return 0f;
+            }
+            return original * scale;
         }
     }
 
@@ -88,8 +93,10 @@ public class AudioUtil {
                     float rng = FastMath.nextRandomFloat();
                     if (rng < 0.65f){
                         a.setPitch(1.0f);
+                        a.setVolume(pingState.getActualVolume());
                     } else {
                         a.setPitch(2.0f);
+                        a.setVolume(pingState.getActualVolume() * .5f);   //higher pitched ones seem a lot louder
                     }
                     a.setLocalTranslation(pos);
                     a.playInstance();

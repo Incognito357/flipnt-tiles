@@ -47,11 +47,9 @@ public class MainMenuState extends TypedBaseAppState<Application> {
                     appStateManager.attach(new GameState());
                 }),
                 Map.entry("OPTIONS", () -> {
-                    onDisable();
-                    guiNode.detachChild(menu);
+                    appStateManager.detach(this);
                     appStateManager.attach(new OptionsState(() -> {
-                        guiNode.attachChild(menu);
-                        onEnable();
+                        appStateManager.attach(new MainMenuState(initialState));
                     }));
                 }),
                 Map.entry("EXIT", app::stop)));

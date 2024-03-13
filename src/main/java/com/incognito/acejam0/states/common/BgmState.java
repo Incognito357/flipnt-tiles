@@ -15,8 +15,8 @@ public class BgmState extends TypedBaseAppState<Application> {
 
     @Override
     protected void onInitialize(Application app) {
+        stoppedAt = Duration.ofNanos(System.nanoTime()).minusSeconds(29).toNanos();
         bgm = AudioUtil.getBgm();
-        bgm.play();
 
         app.getAudioRenderer().setEnvironment(new Environment(new float[]{
                 26, 2.9f, 0.810f, -1000, -500, -700, 3.14f, 1.53f, 0.32f, -1200, 0.039f, 0f, 0f, 0f, 000, 0.027f, 0f, 0f, 0f, 0.214f, 0.110f, 0.250f, 0f, -5f, 12428.5f, 99.6f, 0f, 0x20

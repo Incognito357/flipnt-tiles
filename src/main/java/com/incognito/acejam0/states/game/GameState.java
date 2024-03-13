@@ -106,7 +106,6 @@ public class GameState extends TypedBaseAppState<Application> {
         inputManager = app.getInputManager();
         AppSettings settings = app.getContext().getSettings();
 
-        BitmapFont guiFont = app.getGuiFont();
         guiNode = app.getGuiNode();
 
         menuNode = new Node();
@@ -142,7 +141,7 @@ public class GameState extends TypedBaseAppState<Application> {
         menuBg.setLocalTranslation(0, -settings.getHeight(), -1f);
         menuNode.attachChild(menuBg);
 
-        menuNode.setLocalTranslation(-(menu.getWidth() + 60f), app.getContext().getSettings().getHeight(), 2f);
+        menuNode.setLocalTranslation(-(menu.getWidth() + 60f), settings.getHeight(), 2f);
 
         guiNode.attachChild(menuNode);
 
@@ -168,6 +167,14 @@ public class GameState extends TypedBaseAppState<Application> {
             logger.error("No levels found");
             return;
         }
+
+        addResizeListener(s -> {
+            menuScreen.setMesh(new Quad(s.getWidth(), s.getHeight()));
+            menuNode.setLocalTranslation(menuNode.getLocalTranslation().x, s.getHeight(), 2f);
+            menuBg.setMesh(new Quad(menu.getWidth() + 60f, s.getHeight()));
+            menuBg.setLocalTranslation(0, -settings.getHeight(), -1f);
+            levelMessage.setBox(new Rectangle(0, levelMessage.getLineHeight() + 60f, s.getWidth(), levelMessage.getLineHeight() + 60f));
+        });
 
         startLevel();
     }
