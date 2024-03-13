@@ -9,6 +9,7 @@ import com.incognito.acejam0.domain.Tile;
 import com.incognito.acejam0.states.common.BackgroundRendererState;
 import com.incognito.acejam0.states.common.BackgroundRendererState.BgState;
 import com.incognito.acejam0.states.common.TypedBaseAppState;
+import com.incognito.acejam0.utils.AudioUtil;
 import com.incognito.acejam0.utils.Builder;
 import com.incognito.acejam0.utils.GlobalMaterials;
 import com.incognito.acejam0.utils.TweenUtil;
@@ -34,15 +35,12 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -169,9 +167,9 @@ public class PlayerState extends TypedBaseAppState<Application> {
                                 return new ActionInfo(a.getX(), a.getY(), a.isRelative(), a.getStateChange(), a.getTileChange(), side);
                             })
                             .collect(Collectors.toList()));
-                    updateState(newAction, Arrays.asList(value));
+                    updateState(newAction, Collections.singletonList(value));
                 } else {
-                    updateState(action, Arrays.asList(value));
+                    updateState(action, Collections.singletonList(value));
                 }
             }
         });
@@ -253,7 +251,6 @@ public class PlayerState extends TypedBaseAppState<Application> {
                     return moved.stream()
                             .distinct()
                             .map(v -> v.add(offset.x, offset.y, 0f))
-                            .filter(v -> v.x >= 0 && v.y >= 0 && v.x < level.getWidth() && v.y < level.getHeight())
                             .map(v -> new ActionInfo((int) v.x, (int) v.y, false, a.getStateChange(), a.getTileChange(), a.getTileChangeSide()));
                 })
                 .collect(Collectors.toList());
@@ -261,7 +258,9 @@ public class PlayerState extends TypedBaseAppState<Application> {
             ArrayList<ActionInfo> newActions = action.getActions().stream()
                     .filter(a -> !a.isRelative())
                     .collect(Collectors.toCollection(ArrayList::new));
-            newActions.addAll(relativeActions);
+            newActions.addAll(relativeActions.stream()
+                    .filter(a -> a.getX() >= 0 && a.getY() >= 0 && a.getX() < level.getWidth() && a.getY() < level.getHeight())
+                    .collect(Collectors.toList()));
             action = new Action(newActions);
         }
 
@@ -305,6 +304,8 @@ public class PlayerState extends TypedBaseAppState<Application> {
             TweenUtil.addAnimation(kvp.getKey(), () -> SpatialTweens.move(
                     kvp.getKey(), null, kvp.getKey().getLocalTranslation().add(dx, -dy, 0), 0.25f));
             moved.put(kvp.getKey(), p);
+
+            AudioUtil.playPing(p);
         }
         return moved;
     }

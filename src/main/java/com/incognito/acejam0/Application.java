@@ -3,10 +3,12 @@ package com.incognito.acejam0;
 import com.incognito.acejam0.domain.Level;
 import com.incognito.acejam0.states.common.BackgroundRendererState;
 import com.incognito.acejam0.states.common.BackgroundRendererState.BgState;
+import com.incognito.acejam0.states.common.BgmState;
 import com.incognito.acejam0.states.common.CameraControlsState;
 import com.incognito.acejam0.states.game.MapEditorState;
 import com.incognito.acejam0.states.game.MapRendererState;
 import com.incognito.acejam0.states.menu.MainMenuState;
+import com.incognito.acejam0.utils.AudioUtil;
 import com.incognito.acejam0.utils.Builder;
 import com.jme3.app.DebugKeysAppState;
 import com.jme3.app.FlyCamAppState;
@@ -36,12 +38,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.BitSet;
 import java.util.Collections;
-import java.util.Map;
-import java.util.Properties;
 
 public class Application extends SimpleApplication {
     private static final Logger logger = LogManager.getLogger();
-    private static final boolean EDIT_MODE = false;
+    private static final boolean EDIT_MODE = true;
     public static Application APP;
     private BitmapFont font;
     private BitmapFont fontOutline;
@@ -74,7 +74,7 @@ public class Application extends SimpleApplication {
                 .with(AppSettings::setResolution, resX, resY)
                 .with(AppSettings::setFullscreen, resFull)
                 .build());
-        app.getStateManager().attachAll(new BackgroundRendererState(BgState.MENU), new AnimationState(), new CameraControlsState());
+        app.getStateManager().attachAll(new BackgroundRendererState(BgState.MENU), new AnimationState(), new CameraControlsState(), new BgmState());
         app.setDisplayFps(false);
         app.setDisplayStatView(false);
 
@@ -106,6 +106,8 @@ public class Application extends SimpleApplication {
         stateManager.detach(stateManager.getState(FlyCamAppState.class));
         stateManager.detach(stateManager.getState(DebugKeysAppState.class));
         inputManager.deleteMapping(INPUT_MAPPING_EXIT);
+
+        AudioUtil.initTracks();
     }
 
     @Override
@@ -124,20 +126,15 @@ public class Application extends SimpleApplication {
             if (e.getEventType().equals(HyperlinkEvent.EventType.ACTIVATED) && Desktop.isDesktopSupported()) {
                 try {
                     URI uri = e.getURL().toURI();
-                    StringBuilder sb = new StringBuilder()
-                            .append("title=")
-                            .append("Crash Report - ")
-                            .append(t.getMessage())
-                            .append("&body=")
-                            .append("[Add description here]\n```\n")
-                            .append(sw)
-                            .append("```")
-                            .append("&labels=bug");
+                    String params = "title=Crash Report - " + t.getMessage() +
+                            "&body=[Add description here]\n" +
+                            "```\n" + sw + "```" +
+                            "&labels=bug";
                     Desktop.getDesktop().browse(new URI(
                             uri.getScheme(),
                             uri.getAuthority(),
                             uri.getPath(),
-                            sb.toString(),
+                            params,
                             uri.getFragment()));
                 } catch (IOException | URISyntaxException ex) {
                     logger.error("Could not open browser", ex);
