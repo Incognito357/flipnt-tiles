@@ -42,10 +42,10 @@ import java.util.Map;
 
 public class Application extends SimpleApplication {
     private static final Logger logger = LogManager.getLogger();
-    private static final boolean EDIT_MODE = true;
     public static Application APP;
     private BitmapFont font;
     private BitmapFont fontOutline;
+    private static boolean EDIT_MODE;
 
     public static void main(String[] args) {
         SLF4JBridgeHandler.removeHandlersForRootLogger();
@@ -57,10 +57,12 @@ public class Application extends SimpleApplication {
         String resXProp = System.getProperty("res.x", "1440");
         String resYProp = System.getProperty("res.y", "810");
         String resFullProp = System.getProperty("res.full", "false");
+        String editProp = System.getProperty("editor", "false");
 
         int resX;
         int resY;
         boolean resFull = Boolean.parseBoolean(resFullProp);
+        EDIT_MODE = Boolean.parseBoolean(editProp);
         try {
             resX = Integer.parseUnsignedInt(resXProp);
             resY = Integer.parseUnsignedInt(resYProp);
