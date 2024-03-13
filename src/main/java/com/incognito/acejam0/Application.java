@@ -42,7 +42,7 @@ import java.util.Map;
 
 public class Application extends SimpleApplication {
     private static final Logger logger = LogManager.getLogger();
-    private static final boolean EDIT_MODE = false;
+    private static final boolean EDIT_MODE = true;
     public static Application APP;
     private BitmapFont font;
     private BitmapFont fontOutline;
