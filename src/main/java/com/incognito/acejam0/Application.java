@@ -5,6 +5,7 @@ import com.incognito.acejam0.states.common.BackgroundRendererState;
 import com.incognito.acejam0.states.common.BackgroundRendererState.BgState;
 import com.incognito.acejam0.states.common.BgmState;
 import com.incognito.acejam0.states.common.CameraControlsState;
+import com.incognito.acejam0.states.common.TypedBaseAppState;
 import com.incognito.acejam0.states.game.MapEditorState;
 import com.incognito.acejam0.states.game.MapRendererState;
 import com.incognito.acejam0.states.menu.MainMenuState;
@@ -44,7 +45,6 @@ public class Application extends SimpleApplication {
     public static Application APP;
     private BitmapFont font;
     private BitmapFont fontOutline;
-    private static boolean EDIT_MODE;
 
     public static void main(String[] args) {
         SLF4JBridgeHandler.removeHandlersForRootLogger();
@@ -61,7 +61,7 @@ public class Application extends SimpleApplication {
         int resX;
         int resY;
         boolean resFull = Boolean.parseBoolean(resFullProp);
-        EDIT_MODE = Boolean.parseBoolean(editProp);
+        boolean editMode = Boolean.parseBoolean(editProp);
         try {
             resX = Integer.parseUnsignedInt(resXProp);
             resY = Integer.parseUnsignedInt(resYProp);
@@ -75,12 +75,13 @@ public class Application extends SimpleApplication {
                 .with(AppSettings::setTitle, "Acerola Jam 0 - Aberration")
                 .with(AppSettings::setResolution, resX, resY)
                 .with(AppSettings::setFullscreen, resFull)
+                .with(AppSettings::setResizable, true)
                 .build());
         app.getStateManager().attachAll(new BackgroundRendererState(BgState.MENU), new AnimationState(), new CameraControlsState(), new BgmState());
         app.setDisplayFps(false);
         app.setDisplayStatView(false);
 
-        if (!EDIT_MODE) {
+        if (!editMode) {
             app.getStateManager().attach(new MainMenuState());
         } else {
             app.getStateManager().attachAll(
@@ -99,7 +100,7 @@ public class Application extends SimpleApplication {
         fontOutline = assetManager.loadFont("font/book_antiqua_outline.fnt");
 
         GuiGlobals.initialize(this);
-        GuiGlobals.getInstance().setCursorEventsEnabled(false);
+        GuiGlobals.getInstance().setCursorEventsEnabled(true);
         BaseStyles.loadGlassStyle();
         GuiGlobals.getInstance().getStyles().setDefaultStyle("glass");
 
@@ -154,6 +155,12 @@ public class Application extends SimpleApplication {
         panel.add(new JScrollPane(err), BorderLayout.CENTER);
 
         JOptionPane.showMessageDialog(null, panel, "Well, that's not supposed to happen...", JOptionPane.ERROR_MESSAGE);
+    }
+
+    @Override
+    public void reshape(int w, int h) {
+        super.reshape(w, h);
+        TypedBaseAppState.onResize(settings);
     }
 
     public BitmapFont getGuiFont() {

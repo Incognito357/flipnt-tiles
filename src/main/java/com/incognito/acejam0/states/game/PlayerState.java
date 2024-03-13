@@ -371,24 +371,30 @@ public class PlayerState extends TypedBaseAppState<Application> {
 
     @Override
     protected void onEnable() {
-        if (inputManager != null) {
+        if (inputManager == null) {
+            return;
+        }
+
+        inputManager.addListener(flipListener, "flip");
+        if (!completed) {
             for (InputBinding i : InputBinding.values()) {
                 addListener(inputManager, i);
             }
-            inputManager.addListener(flipListener, "flip");
             inputManager.addListener(resetListener, "reset");
         }
     }
 
     @Override
     protected void onDisable() {
-        if (inputManager != null) {
-            for (InputBinding i : InputBinding.values()) {
-                inputManager.removeListener(listeners.get(i));
-            }
-            inputManager.removeListener(flipListener);
-            inputManager.removeListener(resetListener);
+        if (inputManager == null) {
+            return;
         }
+
+        for (InputBinding i : InputBinding.values()) {
+            inputManager.removeListener(listeners.get(i));
+        }
+        inputManager.removeListener(flipListener);
+        inputManager.removeListener(resetListener);
     }
 
     private void createPlayer(int i, boolean flipped) {

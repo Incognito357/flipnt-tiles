@@ -14,8 +14,6 @@ import com.jme3.system.AppSettings;
 
 import java.util.AbstractMap;
 import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 
 public class MainMenuState extends TypedBaseAppState<Application> {
 
@@ -48,7 +46,12 @@ public class MainMenuState extends TypedBaseAppState<Application> {
                     appStateManager.detach(this);
                     appStateManager.attach(new GameState());
                 }),
-                new AbstractMap.SimpleEntry<>("OPTIONS", () -> {}),
+                new AbstractMap.SimpleEntry<>("OPTIONS", () -> {
+                    appStateManager.detach(this);
+                    appStateManager.attach(new OptionsState(() -> {
+                        appStateManager.attach(new MainMenuState(initialState));
+                    }));
+                }),
                 new AbstractMap.SimpleEntry<>("EXIT", app::stop)));
 
         menu.setLocalTranslation(settings.getWidth() / 2f - menu.getWidth() / 2f, settings.getHeight() / 2f + menu.getHeight() / 2f, 0);

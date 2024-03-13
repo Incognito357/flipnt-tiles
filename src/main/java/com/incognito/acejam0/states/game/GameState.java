@@ -7,6 +7,7 @@ import com.incognito.acejam0.states.common.BackgroundRendererState;
 import com.incognito.acejam0.states.common.TypedBaseAppState;
 import com.incognito.acejam0.states.menu.MainMenuState;
 import com.incognito.acejam0.states.menu.MenuList;
+import com.incognito.acejam0.states.menu.OptionsState;
 import com.incognito.acejam0.utils.FileLoader;
 import com.incognito.acejam0.utils.GlobalMaterials;
 import com.incognito.acejam0.utils.GuiText;
@@ -34,7 +35,6 @@ import org.apache.logging.log4j.Logger;
 import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 public class GameState extends TypedBaseAppState<Application> {
 
@@ -104,7 +104,6 @@ public class GameState extends TypedBaseAppState<Application> {
         inputManager = app.getInputManager();
         AppSettings settings = app.getContext().getSettings();
 
-        BitmapFont guiFont = app.getGuiFont();
         guiNode = app.getGuiNode();
 
         menuNode = new Node();
@@ -113,7 +112,14 @@ public class GameState extends TypedBaseAppState<Application> {
         menuNode.attachChild(label);
 
         menu = new MenuList(app.getFontOutline(), ColorRGBA.LightGray, ColorRGBA.DarkGray, 35f, BitmapFont.Align.Left, Arrays.asList(
-                new AbstractMap.SimpleEntry<>("OPTIONS", () -> {}),
+                new AbstractMap.SimpleEntry<>("OPTIONS", () -> {
+                    menu.onDisable(inputManager);
+                    inputManager.removeListener(menuListener);
+                    appStateManager.attach(new OptionsState(() -> {
+                        inputManager.addListener(menuListener, "menu");
+                        menu.onEnable(inputManager);
+                    }));
+                }),
                 new AbstractMap.SimpleEntry<>("RESTART", () -> {
                     appStateManager.getState(PlayerState.class).restartLevel();
                     toggleMenu();
@@ -133,7 +139,7 @@ public class GameState extends TypedBaseAppState<Application> {
         menuBg.setLocalTranslation(0, -settings.getHeight(), -1f);
         menuNode.attachChild(menuBg);
 
-        menuNode.setLocalTranslation(-(menu.getWidth() + 60f), app.getContext().getSettings().getHeight(), 2f);
+        menuNode.setLocalTranslation(-(menu.getWidth() + 60f), settings.getHeight(), 2f);
 
         guiNode.attachChild(menuNode);
 
@@ -159,6 +165,14 @@ public class GameState extends TypedBaseAppState<Application> {
             logger.error("No levels found");
             return;
         }
+
+        addResizeListener(s -> {
+            menuScreen.setMesh(new Quad(s.getWidth(), s.getHeight()));
+            menuNode.setLocalTranslation(menuNode.getLocalTranslation().x, s.getHeight(), 2f);
+            menuBg.setMesh(new Quad(menu.getWidth() + 60f, s.getHeight()));
+            menuBg.setLocalTranslation(0, -settings.getHeight(), -1f);
+            levelMessage.setBox(new Rectangle(0, levelMessage.getLineHeight() + 60f, s.getWidth(), levelMessage.getLineHeight() + 60f));
+        });
 
         startLevel();
     }
