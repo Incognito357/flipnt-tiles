@@ -7,6 +7,7 @@ import com.incognito.acejam0.states.common.BackgroundRendererState;
 import com.incognito.acejam0.states.common.TypedBaseAppState;
 import com.incognito.acejam0.states.menu.MainMenuState;
 import com.incognito.acejam0.states.menu.MenuList;
+import com.incognito.acejam0.states.menu.OptionsState;
 import com.incognito.acejam0.utils.FileLoader;
 import com.incognito.acejam0.utils.GlobalMaterials;
 import com.incognito.acejam0.utils.GuiText;
@@ -115,6 +116,12 @@ public class GameState extends TypedBaseAppState<Application> {
 
         menu = new MenuList(app.getFontOutline(), ColorRGBA.LightGray, ColorRGBA.DarkGray, 35f, BitmapFont.Align.Left, List.of(
                 Map.entry("OPTIONS", () -> {
+                    menu.onDisable(inputManager);
+                    inputManager.removeListener(menuListener);
+                    appStateManager.attach(new OptionsState(() -> {
+                        inputManager.addListener(menuListener, "menu");
+                        menu.onEnable(inputManager);
+                    }));
                 }),
                 Map.entry("RESTART", () -> {
                     appStateManager.getState(PlayerState.class).restartLevel();

@@ -1,7 +1,7 @@
 package com.incognito.acejam0.states.common;
 
 import com.incognito.acejam0.Application;
-import com.jme3.audio.AudioData;
+import com.incognito.acejam0.utils.AudioUtil;
 import com.jme3.audio.AudioNode;
 import com.jme3.audio.AudioSource;
 import com.jme3.audio.Environment;
@@ -15,8 +15,7 @@ public class BgmState extends TypedBaseAppState<Application> {
 
     @Override
     protected void onInitialize(Application app) {
-        bgm = new AudioNode(app.getAssetManager(), "audio/bgm.ogg", AudioData.DataType.Stream);
-        bgm.setPositional(false);
+        bgm = AudioUtil.getBgm();
         bgm.play();
 
         app.getAudioRenderer().setEnvironment(new Environment(new float[]{
@@ -26,7 +25,7 @@ public class BgmState extends TypedBaseAppState<Application> {
 
     @Override
     protected void onCleanup(Application app) {
-        bgm.stop();
+        AudioUtil.getBgm().stop();
     }
 
     @Override

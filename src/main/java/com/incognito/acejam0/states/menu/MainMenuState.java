@@ -46,7 +46,14 @@ public class MainMenuState extends TypedBaseAppState<Application> {
                     appStateManager.detach(this);
                     appStateManager.attach(new GameState());
                 }),
-                Map.entry("OPTIONS", () -> {}),
+                Map.entry("OPTIONS", () -> {
+                    onDisable();
+                    guiNode.detachChild(menu);
+                    appStateManager.attach(new OptionsState(() -> {
+                        guiNode.attachChild(menu);
+                        onEnable();
+                    }));
+                }),
                 Map.entry("EXIT", app::stop)));
 
         menu.setLocalTranslation(settings.getWidth() / 2f - menu.getWidth() / 2f, settings.getHeight() / 2f + menu.getHeight() / 2f, 0);

@@ -7,30 +7,76 @@ import com.jme3.audio.AudioNode;
 import com.jme3.math.FastMath;
 import com.jme3.math.Vector3f;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class AudioUtil {
     private AudioUtil() {}
 
     private static Set<AudioNode> pings;
+    private static AudioNode bgm;
+    private static final AtomicBoolean initialized = new AtomicBoolean(false);
+
+    private static AudioState bgmState;
+    private static AudioState pingState;
+
+    public static class AudioState {
+        private float original;
+        private final float scale;
+        private boolean muted;
+        private final Collection<AudioNode> nodes;
+
+        private AudioState(float scale, Collection<AudioNode> nodes) {
+            this.original = 1.0f;
+            this.scale = scale;
+            this.muted = false;
+            this.nodes = nodes;
+        }
+
+        public boolean isMuted() {
+            return muted;
+        }
+
+        public void toggleMute() {
+            muted = !muted;
+            nodes.forEach(a -> a.setVolume(muted ? 0f : original * scale));
+        }
+
+        public void setVolume(float volume) {
+            original = volume;
+            if (!muted) {
+                nodes.forEach(a -> a.setVolume(volume * scale));
+            }
+        }
+
+        public float getVolume() {
+            return original;
+        }
+    }
 
     private static AudioNode initAudio(AssetManager assetManager, String file) {
         AudioNode node = new AudioNode(assetManager, file, AudioData.DataType.Buffer);
         node.setReverbEnabled(true);
-        node.setVolume(0.25f);
         return node;
     }
 
-
     public static void initTracks() {
-        if (pings == null) {
+        if (initialized.compareAndSet(false, true)) {
             AssetManager assetManager = Application.APP.getAssetManager();
+
+            bgm = new AudioNode(assetManager, "audio/bgm.ogg", AudioData.DataType.Stream);
+            bgm.setPositional(false);
+            bgmState = new AudioState(1.0f, List.of(bgm));
+
             pings = Set.of(
                     initAudio(assetManager, "audio/pinga5.wav"),
                     initAudio(assetManager, "audio/pingb5.wav"),
                     initAudio(assetManager, "audio/pingc6.wav"),
                     initAudio(assetManager, "audio/pingd6.wav"),
                     initAudio(assetManager, "audio/pinge6.wav"));
+            pingState = new AudioState(0.2f, pings);
         }
     }
 
@@ -49,4 +95,17 @@ public class AudioUtil {
                     a.playInstance();
                 });
     }
+
+    public static AudioNode getBgm() {
+        return bgm;
+    }
+
+    public static AudioState getBgmState() {
+        return bgmState;
+    }
+
+    public static AudioState getPingState() {
+        return pingState;
+    }
+
 }
