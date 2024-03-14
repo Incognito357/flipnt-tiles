@@ -17,4 +17,4 @@ Shaders created using [FastNoiseLite](https://github.com/Auburn/FastNoiseLite?ta
 Should run directly from the jar, but can also be ran from the command line with `java -jar flipnt-tiles.jar`.
 
 There are options to change the screen resolution in-game, but if that is not possible, the resolution can be passed as arguments:
-`java -jar -Dres.x=640 -Dres.y=480 -Dres.full=true`
+`java -jar -Dres.x=640 -Dres.y=480 -Dres.full=true flipnt-tiles.jar`
