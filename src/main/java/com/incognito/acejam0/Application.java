@@ -74,7 +74,7 @@ public class Application extends SimpleApplication {
         }
 
         app.setSettings(new Builder<>(new AppSettings(true))
-                .with(AppSettings::setTitle, "Acerola Jam 0 - Aberration")
+                .with(AppSettings::setTitle, "Flipn't Tiles")
                 .with(AppSettings::setResolution, resX, resY)
                 .with(AppSettings::setFullscreen, resFull)
                 .with(AppSettings::setResizable, true)

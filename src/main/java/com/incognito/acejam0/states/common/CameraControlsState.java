@@ -114,6 +114,11 @@ public class CameraControlsState extends TypedBaseAppState<Application> {
         updateFov();
     }
 
+    public void setZoom(float scale) {
+        this.scale = scale;
+        updateFov();
+    }
+
     private void updateFov() {
         camera.setFrustumLeft(frustum.x * scale);
         camera.setFrustumTop(frustum.y * scale);

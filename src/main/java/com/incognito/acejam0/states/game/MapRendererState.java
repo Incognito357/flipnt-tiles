@@ -30,9 +30,15 @@ public class MapRendererState extends TypedBaseAppState<Application> {
     private Node rootNode;
     private Level level;
     private boolean editing = false;
+    private final boolean centerOnStart;
 
     public MapRendererState(Level level) {
+        this(level, true);
+    }
+
+    public MapRendererState(Level level, boolean centerOnStart) {
         this.level = level;
+        this.centerOnStart = centerOnStart;
     }
 
     @Override
@@ -76,8 +82,11 @@ public class MapRendererState extends TypedBaseAppState<Application> {
             tiles1.attachChild(node);
             tiles2.attachChild(node2);
         }
-        Camera camera = getApplication().getCamera();
-        camera.setLocation(new Vector3f(level.getWidth() / 2.0f - 0.5f, -level.getHeight() / 2.0f + 0.5f, camera.getLocation().z));
+
+        if (centerOnStart) {
+            Camera camera = getApplication().getCamera();
+            camera.setLocation(new Vector3f(level.getWidth() / 2.0f - 0.5f, -level.getHeight() / 2.0f + 0.5f, camera.getLocation().z));
+        }
 
         rootNode.attachChild(tiles1);
         rootNode.attachChild(tiles2);
