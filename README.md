@@ -2,15 +2,17 @@ Created for the [Acerola Jam 0](https://itch.io/jam/acerola-jam-0) game jam
 
 [Itch.io submission](https://incognito357.itch.io/flipnt-tiles)
 
+<br>
 
 Core game created using [jMonkeyEngine](https://github.com/jMonkeyEngine/jmonkeyengine)
-
+<br>
 Music created with [MuseScore4](https://musescore.org/en), using the [Serenity VST3 plugin](https://quietmusic.eu/serenity)
-
+<br>
 Audio edited with [Audacity](https://www.audacityteam.org/)
-
+<br>
 Shaders created using [FastNoiseLite](https://github.com/Auburn/FastNoiseLite?tab=readme-ov-file)
 
+<br>
 
 Should run directly from the jar, but can also be ran from the command line with `java -jar flipnt-tiles.jar`.
 
